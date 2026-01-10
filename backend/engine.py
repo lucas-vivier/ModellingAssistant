@@ -1,4 +1,4 @@
-"""Moteur de questionnaire dynamique."""
+"""Dynamic questionnaire engine."""
 
 import yaml
 from pathlib import Path
@@ -6,7 +6,7 @@ from typing import Any
 
 
 def load_template(template_name: str) -> dict:
-    """Charge un template YAML."""
+    """Load a YAML template."""
     path = Path(__file__).parent / "templates" / f"{template_name}.yaml"
     with open(path, "r", encoding="utf-8") as f:
         return yaml.safe_load(f)
@@ -14,13 +14,13 @@ def load_template(template_name: str) -> dict:
 
 def evaluate_condition(condition: dict, answers: dict) -> bool:
     """
-    Évalue une condition pour déterminer si une question doit être affichée.
-    
-    Opérateurs supportés:
-    - equals: valeur exacte
-    - not_equals: différent de
-    - contains: présent dans une liste (pour multi_choice)
-    - not_contains: absent d'une liste
+    Evaluate a condition to determine whether a question should be displayed.
+
+    Supported operators:
+    - equals: exact match
+    - not_equals: different from
+    - contains: present in a list (for multi_choice)
+    - not_contains: absent from a list
     """
     field = condition["field"]
     operator = condition["operator"]
@@ -48,31 +48,31 @@ def evaluate_condition(condition: dict, answers: dict) -> bool:
 
 
 def should_show_question(question: dict, answers: dict) -> bool:
-    """Détermine si une question doit être affichée selon ses conditions."""
+    """Determine whether a question should be displayed based on conditions."""
     conditions = question.get("conditions", [])
     
     if not conditions:
         return True
     
-    # Toutes les conditions doivent être vraies (AND)
+    # All conditions must be true (AND)
     return all(evaluate_condition(c, answers) for c in conditions)
 
 
 def get_next_question(template: dict, answers: dict) -> dict | None:
     """
-    Retourne la prochaine question à afficher.
-    
+    Return the next question to display.
+
     Returns:
-        La question suivante ou None si le questionnaire est terminé.
+        The next question or None if the questionnaire is complete.
     """
     for question in template["questions"]:
         qid = question["id"]
         
-        # Question déjà répondue
+        # Question already answered
         if qid in answers:
             continue
         
-        # Vérifier les conditions
+        # Check conditions
         if should_show_question(question, answers):
             return question
     
@@ -80,7 +80,7 @@ def get_next_question(template: dict, answers: dict) -> dict | None:
 
 
 def get_all_visible_questions(template: dict, answers: dict) -> list[dict]:
-    """Retourne toutes les questions visibles avec l'état actuel des réponses."""
+    """Return all visible questions with the current answer state."""
     visible = []
     for question in template["questions"]:
         if should_show_question(question, answers):
@@ -93,7 +93,7 @@ def get_all_visible_questions(template: dict, answers: dict) -> list[dict]:
 
 
 def calculate_progress(template: dict, answers: dict) -> dict:
-    """Calcule la progression du questionnaire."""
+    """Calculate questionnaire progress."""
     visible = get_all_visible_questions(template, answers)
     answered = sum(1 for q in visible if q["answered"])
     total = len(visible)
@@ -107,17 +107,17 @@ def calculate_progress(template: dict, answers: dict) -> dict:
 
 def render_output(template_str: str, answers: dict) -> str:
     """
-    Rendu simple d'un template avec les réponses.
-    
-    Supporte:
-    - {{variable}} : remplacement simple
-    - {% if variable %}...{% endif %} : conditionnel basique
+    Simple rendering of a template with answers.
+
+    Supports:
+    - {{variable}}: simple replacement
+    - {% if variable %}...{% endif %}: basic conditional
     """
     import re
     
     result = template_str
     
-    # Traitement des conditionnels {% if var %}...{% endif %}
+    # Handle conditionals: {% if var %}...{% endif %}
     pattern = r'\{%\s*if\s+(\w+)\s*%\}(.*?)\{%\s*endif\s*%\}'
     
     def replace_conditional(match):
@@ -129,7 +129,7 @@ def render_output(template_str: str, answers: dict) -> str:
     
     result = re.sub(pattern, replace_conditional, result, flags=re.DOTALL)
     
-    # Remplacement des variables {{var}}
+    # Replace variables: {{var}}
     for key, value in answers.items():
         if isinstance(value, list):
             value = ", ".join(value)
@@ -139,7 +139,7 @@ def render_output(template_str: str, answers: dict) -> str:
 
 
 def generate_outputs(template: dict, answers: dict) -> list[dict]:
-    """Génère tous les outputs définis dans le template."""
+    """Generate all outputs defined in the template."""
     outputs = []
     
     for output_def in template.get("outputs", []):

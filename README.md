@@ -1,17 +1,17 @@
-# Questionnaire Dynamique
+# Dynamic Questionnaire
 
-MVP d'un moteur de questionnaire dynamique avec interface web.
+MVP for a dynamic questionnaire engine with a web interface.
 
 ## Structure
 
 ```
 questionnaire-app/
 ├── backend/
-│   ├── main.py              # API FastAPI
-│   ├── engine.py            # Moteur de questionnaire
+│   ├── main.py              # FastAPI API
+│   ├── engine.py            # Questionnaire engine
 │   ├── requirements.txt
 │   └── templates/
-│       └── dev_project.yaml # Template exemple
+│       └── dev_project.yaml # Example template
 ├── frontend/
 │   ├── src/
 │   │   ├── App.jsx
@@ -48,19 +48,19 @@ cd frontend
 npm install
 ```
 
-## Lancement
+## Running
 
-### Option 1 : VS Code (recommandé)
+### Option 1: VS Code (recommended)
 
-Lancez les deux serveurs en un clic :
+Start both servers with one click:
 
 1. `Cmd+Shift+P` (ou `Ctrl+Shift+P` sur Windows/Linux)
-2. Tapez "Tasks: Run Task"
-3. Sélectionnez **"Start Dev Servers"**
+2. Type "Tasks: Run Task"
+3. Select **"Start Dev Servers"**
 
-Les deux terminaux (backend + frontend) s'ouvriront automatiquement.
+Both terminals (backend + frontend) will open automatically.
 
-**Astuce** : Ajoutez un raccourci clavier pour aller encore plus vite. Dans `keybindings.json` :
+**Tip**: Add a keyboard shortcut to go even faster. In `keybindings.json`:
 
 ```json
 {
@@ -70,7 +70,7 @@ Les deux terminaux (backend + frontend) s'ouvriront automatiquement.
 }
 ```
 
-### Option 2 : Manuellement
+### Option 2: Manually
 
 #### Backend (Terminal 1)
 
@@ -80,7 +80,7 @@ source venv/bin/activate
 uvicorn main:app --reload --port 8000
 ```
 
-API disponible sur http://localhost:8000
+API available at http://localhost:8000
 
 #### Frontend (Terminal 2)
 
@@ -89,63 +89,63 @@ cd frontend
 npm run dev
 ```
 
-Interface disponible sur http://localhost:5173
+UI available at http://localhost:5173
 
-## Créer un nouveau template
+## Create a new template
 
-Les templates sont des fichiers YAML dans `backend/templates/`.
+Templates are YAML files in `backend/templates/`.
 
-### Structure d'un template
+### Template structure
 
 ```yaml
-name: "Nom du questionnaire"
+name: "Questionnaire name"
 description: "Description"
 version: "1.0"
 
 questions:
   - id: identifiant_unique
     type: text | textarea | single_choice | multi_choice
-    question: "La question à poser"
-    placeholder: "Texte d'aide"  # optionnel
+    question: "The question to ask"
+    placeholder: "Help text"  # optional
     required: true | false
-    options:  # pour single_choice et multi_choice
+    options:  # for single_choice and multi_choice
       - id: option1
         label: "Label affiché"
-    conditions:  # optionnel, affiche la question seulement si conditions remplies
+    conditions:  # optional, show the question only if conditions are met
       - field: id_autre_question
         operator: equals | not_equals | contains | not_contains
-        value: valeur_attendue
+        value: expected_value
 
 outputs:
   - type: markdown | prompt
-    name: "Nom de l'output"
+    name: "Output name"
     template: |
-      Contenu avec {{variables}} et 
-      {% if variable %}contenu conditionnel{% endif %}
+      Content with {{variables}} and 
+      {% if variable %}conditional content{% endif %}
 ```
 
-### Opérateurs de conditions
+### Condition operators
 
-- `equals` : la réponse est exactement égale à la valeur
-- `not_equals` : la réponse est différente de la valeur
-- `contains` : la valeur est présente dans la réponse (pour multi_choice)
-- `not_contains` : la valeur est absente de la réponse
+- `equals`: the answer is exactly equal to the value
+- `not_equals`: the answer is different from the value
+- `contains`: the value is present in the answer (for multi_choice)
+- `not_contains`: the value is absent from the answer
 
 ## API Endpoints
 
-| Méthode | Endpoint | Description |
+| Method | Endpoint | Description |
 |---------|----------|-------------|
-| GET | `/templates` | Liste les templates disponibles |
-| POST | `/session/start` | Démarre une session |
-| GET | `/session/{id}/status` | État de la session |
-| POST | `/session/answer` | Soumet une réponse |
-| GET | `/session/{id}/outputs` | Génère les outputs |
-| DELETE | `/session/{id}` | Supprime une session |
+| GET | `/templates` | List available templates |
+| POST | `/session/start` | Start a session |
+| GET | `/session/{id}/status` | Session status |
+| POST | `/session/answer` | Submit an answer |
+| GET | `/session/{id}/outputs` | Generate outputs |
+| DELETE | `/session/{id}` | Delete a session |
 
-## Évolutions possibles
+## Possible next steps
 
-1. **Persistance** : Ajouter une base de données pour sauvegarder les sessions
-2. **LLM** : Ajouter des appels API pour des questions dynamiques
-3. **Actions** : Déclencher des webhooks, créer des fichiers, envoyer des emails
-4. **Auth** : Ajouter une authentification utilisateur
-5. **Teams** : Intégration Microsoft Teams via Bot Framework
+1. **Persistence**: Add a database to store sessions
+2. **LLM**: Add API calls for dynamic questions
+3. **Actions**: Trigger webhooks, create files, send emails
+4. **Auth**: Add user authentication
+5. **Teams**: Integrate Microsoft Teams via Bot Framework

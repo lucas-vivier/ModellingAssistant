@@ -5,7 +5,7 @@ import OutputViewer from './components/OutputViewer'
 import TwoPanelLayout from './components/TwoPanelLayout'
 import VisualizationPanel from './components/VisualizationPanel'
 
-const API_BASE = ''
+const API_BASE = import.meta.env.VITE_API_BASE || ''
 
 function App() {
   const [view, setView] = useState('select') // 'select' | 'questionnaire' | 'results'

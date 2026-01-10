@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: questionnaire-backend
+    env: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    autoDeploy: true
+
+  - type: static_site
+    name: questionnaire-frontend
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_BASE
+        fromService:
+          name: questionnaire-backend
+          type: web
+          property: url
+    autoDeploy: true

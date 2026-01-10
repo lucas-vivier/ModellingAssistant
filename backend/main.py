@@ -1,4 +1,4 @@
-"""API FastAPI pour le questionnaire dynamique."""
+"""FastAPI API for the dynamic questionnaire."""
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,9 +13,9 @@ from engine import (
     generate_outputs,
 )
 
-app = FastAPI(title="Questionnaire Dynamique", version="1.0.0")
+app = FastAPI(title="Dynamic Questionnaire", version="1.0.0")
 
-# CORS pour le frontend
+# CORS for the frontend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -24,7 +24,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Stockage en mémoire des sessions (pour le MVP)
+# In-memory session storage (for the MVP)
 sessions: dict[str, dict] = {}
 
 
@@ -40,7 +40,7 @@ class AnswerRequest(BaseModel):
 
 @app.get("/templates")
 def list_templates():
-    """Liste tous les templates disponibles."""
+    """List all available templates."""
     templates_dir = Path(__file__).parent / "templates"
     templates = []
     
@@ -57,13 +57,13 @@ def list_templates():
 
 @app.post("/session/start")
 def start_session(request: StartRequest):
-    """Démarre une nouvelle session de questionnaire."""
+    """Start a new questionnaire session."""
     import uuid
     
     try:
         template = load_template(request.template_name)
     except FileNotFoundError:
-        raise HTTPException(status_code=404, detail="Template non trouvé")
+        raise HTTPException(status_code=404, detail="Template not found")
     
     session_id = str(uuid.uuid4())
     sessions[session_id] = {
@@ -81,9 +81,9 @@ def start_session(request: StartRequest):
 
 @app.get("/session/{session_id}/status")
 def get_session_status(session_id: str):
-    """Retourne l'état actuel de la session."""
+    """Return the current session state."""
     if session_id not in sessions:
-        raise HTTPException(status_code=404, detail="Session non trouvée")
+        raise HTTPException(status_code=404, detail="Session not found")
     
     session = sessions[session_id]
     template = session["template"]
@@ -105,9 +105,9 @@ def get_session_status(session_id: str):
 
 @app.post("/session/answer")
 def submit_answer(request: AnswerRequest):
-    """Soumet une réponse à une question."""
+    """Submit an answer to a question."""
     if request.session_id not in sessions:
-        raise HTTPException(status_code=404, detail="Session non trouvée")
+        raise HTTPException(status_code=404, detail="Session not found")
     
     session = sessions[request.session_id]
     session["answers"][request.question_id] = request.answer
@@ -117,9 +117,9 @@ def submit_answer(request: AnswerRequest):
 
 @app.get("/session/{session_id}/outputs")
 def get_outputs(session_id: str):
-    """Génère les outputs finaux du questionnaire."""
+    """Generate the final outputs for the questionnaire."""
     if session_id not in sessions:
-        raise HTTPException(status_code=404, detail="Session non trouvée")
+        raise HTTPException(status_code=404, detail="Session not found")
     
     session = sessions[session_id]
     template = session["template"]
@@ -132,12 +132,12 @@ def get_outputs(session_id: str):
 
 @app.delete("/session/{session_id}")
 def delete_session(session_id: str):
-    """Supprime une session."""
+    """Delete a session."""
     if session_id not in sessions:
-        raise HTTPException(status_code=404, detail="Session non trouvée")
+        raise HTTPException(status_code=404, detail="Session not found")
     
     del sessions[session_id]
-    return {"message": "Session supprimée"}
+    return {"message": "Session deleted"}
 
 
 if __name__ == "__main__":

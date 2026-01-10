@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { FileText, ArrowRight, Loader2 } from 'lucide-react'
 
-const API_BASE = ''
+const API_BASE = import.meta.env.VITE_API_BASE || ''
 
 function TemplateSelector({ onSelect }) {
   const [templates, setTemplates] = useState([])
@@ -17,7 +17,7 @@ function TemplateSelector({ onSelect }) {
       const data = await response.json()
       setTemplates(data.templates)
     } catch (error) {
-      console.error('Erreur chargement templates:', error)
+      console.error('Error loading templates:', error)
     } finally {
       setLoading(false)
     }

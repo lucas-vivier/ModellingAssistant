@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { Check, Loader2 } from 'lucide-react'
 import QuestionCard from './QuestionCard'
 
-const API_BASE = ''
+const API_BASE = import.meta.env.VITE_API_BASE || ''
 
 function Questionnaire({ sessionId, templateName, onComplete, onAnswerUpdate, onStatusUpdate }) {
   const [status, setStatus] = useState(null)
