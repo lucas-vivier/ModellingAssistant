@@ -1,0 +1,230 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-ink-950 text-ink-100 antialiased;
+    background-image: 
+      radial-gradient(ellipse at top, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
+      radial-gradient(ellipse at bottom right, rgba(99, 102, 241, 0.05) 0%, transparent 50%);
+    min-height: 100vh;
+  }
+}
+
+@layer components {
+  .question-card {
+    @apply bg-ink-900/50 backdrop-blur-sm border border-ink-800 rounded-2xl p-8;
+    box-shadow: 
+      0 0 0 1px rgba(255, 255, 255, 0.03),
+      0 20px 50px -20px rgba(0, 0, 0, 0.5);
+  }
+
+  .btn-primary {
+    @apply bg-accent hover:bg-accent-dark text-white font-medium py-3 px-6 rounded-xl;
+    @apply transition-all duration-200 ease-out;
+    @apply hover:shadow-lg hover:shadow-accent/25 hover:-translate-y-0.5;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none;
+  }
+
+  .btn-secondary {
+    @apply bg-ink-800 hover:bg-ink-700 text-ink-100 font-medium py-3 px-6 rounded-xl;
+    @apply transition-all duration-200 ease-out border border-ink-700;
+    @apply hover:-translate-y-0.5;
+  }
+
+  .input-field {
+    @apply w-full bg-ink-800/50 border border-ink-700 rounded-xl px-4 py-3;
+    @apply text-ink-100 placeholder:text-ink-500;
+    @apply focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20;
+    @apply transition-all duration-200;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-ink-900/30;
+  }
+
+  .option-button {
+    @apply w-full text-left bg-ink-800/30 border border-ink-700/50 rounded-xl px-5 py-4;
+    @apply text-ink-200 transition-all duration-200 ease-out;
+    @apply hover:bg-ink-800/60 hover:border-ink-600;
+    @apply focus:outline-none focus:ring-2 focus:ring-accent/30;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-ink-800/30 disabled:hover:border-ink-700/50;
+  }
+
+  .option-button.selected {
+    @apply bg-accent/10 border-accent text-white;
+    @apply ring-2 ring-accent/20;
+  }
+
+  .progress-bar {
+    @apply h-1 bg-ink-800 rounded-full overflow-hidden;
+  }
+
+  .progress-fill {
+    @apply h-full bg-gradient-to-r from-accent to-accent-light rounded-full;
+    @apply transition-all duration-500 ease-out;
+  }
+
+  /* Two-panel layout */
+  .panel-card {
+    @apply bg-ink-900/50 backdrop-blur-sm border border-ink-800 rounded-2xl;
+    @apply flex flex-col overflow-hidden;
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.03),
+      0 20px 50px -20px rgba(0, 0, 0, 0.5);
+  }
+
+  .panel-header {
+    @apply border-b border-ink-800 px-6 py-4 flex-shrink-0;
+  }
+
+  .panel-content {
+    @apply flex-1 overflow-y-auto p-6;
+  }
+
+  /* Tab navigation */
+  .tab-button {
+    @apply px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200;
+    @apply text-ink-400 hover:text-white hover:bg-ink-800;
+  }
+
+  .tab-button.active {
+    @apply bg-accent text-white;
+  }
+
+  /* Status highlighting for document preview */
+  .status-section {
+    @apply rounded-lg p-4 my-3 transition-all duration-300;
+  }
+
+  .status-answered {
+    @apply border-l-4 border-green-500/60 bg-green-500/5;
+  }
+
+  .status-current {
+    @apply border-l-4 border-amber-500/60 bg-amber-500/5;
+    animation: pulse-border 2s ease-in-out infinite;
+  }
+
+  .status-pending {
+    @apply border-l-4 border-ink-700 bg-ink-900/30 opacity-50;
+  }
+
+  /* Diagram styling */
+  .diagram-node {
+    @apply transition-all duration-300;
+  }
+
+  .diagram-node-answered {
+    fill: rgba(34, 197, 94, 0.1);
+    stroke: rgba(34, 197, 94, 0.6);
+  }
+
+  .diagram-node-current {
+    fill: rgba(245, 158, 11, 0.1);
+    stroke: rgba(245, 158, 11, 0.6);
+    animation: pulse-border 2s ease-in-out infinite;
+  }
+
+  .diagram-node-pending {
+    fill: rgba(63, 63, 70, 0.3);
+    stroke: rgba(82, 82, 91, 0.6);
+  }
+
+  .diagram-text-answered {
+    fill: rgb(134, 239, 172);
+  }
+
+  .diagram-text-current {
+    fill: rgb(252, 211, 77);
+  }
+
+  .diagram-text-pending {
+    fill: rgb(161, 161, 170);
+  }
+
+  .diagram-line {
+    stroke: rgba(82, 82, 91, 0.5);
+    stroke-width: 2;
+    fill: none;
+  }
+
+  .diagram-line-active {
+    stroke: rgba(99, 102, 241, 0.6);
+    stroke-width: 2;
+    fill: none;
+  }
+}
+
+/* Scrollbar custom */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-ink-900;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-ink-700 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-ink-600;
+}
+
+/* Animation pour les questions */
+.question-enter {
+  animation: slideUp 0.4s ease-out;
+}
+
+/* Code block dans les outputs */
+.output-content pre {
+  @apply bg-ink-900 rounded-lg p-4 overflow-x-auto text-sm;
+}
+
+.output-content code {
+  @apply text-accent-light;
+}
+
+.output-content h1, .output-content h2, .output-content h3 {
+  @apply font-display font-semibold text-white mt-6 mb-3;
+}
+
+.output-content h1 { @apply text-2xl; }
+.output-content h2 { @apply text-xl; }
+.output-content h3 { @apply text-lg; }
+
+.output-content ul, .output-content ol {
+  @apply ml-6 my-3 space-y-1;
+}
+
+.output-content li {
+  @apply text-ink-300;
+}
+
+.output-content p {
+  @apply text-ink-300 my-2;
+}
+
+/* Animations */
+@keyframes pulse-border {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out;
+}

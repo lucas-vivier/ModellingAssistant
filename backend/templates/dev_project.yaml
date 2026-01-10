@@ -1,0 +1,290 @@
+name: "Dev Project Onboarding"
+description: "Questionnaire to kick off a development project"
+version: "1.0"
+
+questions:
+  - id: project_name
+    type: text
+    question: "What is your project name?"
+    placeholder: "E.g.: MyAppAPI"
+    required: true
+
+  - id: project_description
+    type: textarea
+    question: "Briefly describe the project in a few sentences"
+    placeholder: "Main objective, context, target users..."
+    required: true
+
+  - id: project_type
+    type: single_choice
+    question: "What type of project is this?"
+    options:
+      - id: api
+        label: "API / Backend"
+      - id: web_app
+        label: "Web Application"
+      - id: cli
+        label: "Command Line Tool"
+      - id: data_pipeline
+        label: "Data Pipeline"
+      - id: library
+        label: "Library / Package"
+      - id: other
+        label: "Other"
+    required: true
+
+  - id: languages
+    type: multi_choice
+    question: "What programming languages will be used?"
+    options:
+      - id: python
+        label: "Python"
+      - id: javascript
+        label: "JavaScript / TypeScript"
+      - id: java
+        label: "Java"
+      - id: csharp
+        label: "C#"
+      - id: go
+        label: "Go"
+      - id: rust
+        label: "Rust"
+      - id: other
+        label: "Other"
+    required: true
+
+  - id: python_framework
+    type: single_choice
+    question: "Which Python framework are you considering?"
+    options:
+      - id: fastapi
+        label: "FastAPI"
+      - id: django
+        label: "Django"
+      - id: flask
+        label: "Flask"
+      - id: none
+        label: "None / Simple script"
+    conditions:
+      - field: languages
+        operator: contains
+        value: python
+    required: true
+
+  - id: js_framework
+    type: single_choice
+    question: "Which JavaScript/TypeScript framework?"
+    options:
+      - id: react
+        label: "React"
+      - id: vue
+        label: "Vue.js"
+      - id: nextjs
+        label: "Next.js"
+      - id: node
+        label: "Node.js (backend)"
+      - id: none
+        label: "Vanilla JS"
+    conditions:
+      - field: languages
+        operator: contains
+        value: javascript
+    required: true
+
+  - id: data_input
+    type: multi_choice
+    question: "What are the input data sources?"
+    options:
+      - id: api_rest
+        label: "External REST API"
+      - id: database
+        label: "Database"
+      - id: files_csv
+        label: "CSV/Excel Files"
+      - id: files_json
+        label: "JSON Files"
+      - id: user_input
+        label: "User Input"
+      - id: streaming
+        label: "Real-time Stream"
+      - id: none
+        label: "No external data"
+    required: true
+
+  - id: database_type
+    type: single_choice
+    question: "What type of database?"
+    options:
+      - id: postgresql
+        label: "PostgreSQL"
+      - id: mysql
+        label: "MySQL"
+      - id: mongodb
+        label: "MongoDB"
+      - id: sqlite
+        label: "SQLite"
+      - id: other
+        label: "Other"
+    conditions:
+      - field: data_input
+        operator: contains
+        value: database
+    required: true
+
+  - id: team_size
+    type: single_choice
+    question: "What is the team size?"
+    options:
+      - id: solo
+        label: "Solo"
+      - id: small
+        label: "Small team (2-5)"
+      - id: medium
+        label: "Medium team (6-15)"
+      - id: large
+        label: "Large team (15+)"
+    required: true
+
+  - id: testing_strategy
+    type: multi_choice
+    question: "What testing strategy do you want to implement?"
+    options:
+      - id: unit
+        label: "Unit tests"
+      - id: integration
+        label: "Integration tests"
+      - id: e2e
+        label: "End-to-end tests"
+      - id: manual
+        label: "Manual testing only"
+      - id: none
+        label: "No tests (not recommended)"
+    required: true
+
+  - id: ci_cd
+    type: single_choice
+    question: "Do you need a CI/CD pipeline?"
+    options:
+      - id: github_actions
+        label: "Yes - GitHub Actions"
+      - id: gitlab_ci
+        label: "Yes - GitLab CI"
+      - id: azure_devops
+        label: "Yes - Azure DevOps"
+      - id: other
+        label: "Yes - Other"
+      - id: no
+        label: "No"
+    conditions:
+      - field: team_size
+        operator: not_equals
+        value: solo
+    required: true
+
+  - id: documentation
+    type: multi_choice
+    question: "What types of documentation do you plan?"
+    options:
+      - id: readme
+        label: "README"
+      - id: api_docs
+        label: "API Documentation (Swagger/OpenAPI)"
+      - id: code_comments
+        label: "Code comments"
+      - id: wiki
+        label: "Wiki / Confluence"
+      - id: architecture
+        label: "Architecture documentation"
+    required: true
+
+  - id: deployment
+    type: single_choice
+    question: "Where will the project be deployed?"
+    options:
+      - id: cloud_aws
+        label: "AWS"
+      - id: cloud_azure
+        label: "Azure"
+      - id: cloud_gcp
+        label: "Google Cloud"
+      - id: on_premise
+        label: "On-premise"
+      - id: local
+        label: "Local only"
+      - id: undecided
+        label: "Not yet decided"
+    required: true
+
+  - id: timeline
+    type: single_choice
+    question: "What is the expected timeline for the MVP?"
+    options:
+      - id: week
+        label: "< 1 week"
+      - id: month
+        label: "1-4 weeks"
+      - id: quarter
+        label: "1-3 months"
+      - id: more
+        label: "> 3 months"
+    required: true
+
+  - id: additional_notes
+    type: textarea
+    question: "Any other information or constraints to consider?"
+    placeholder: "Technical constraints, security, performance, integrations..."
+    required: false
+
+outputs:
+  - type: markdown
+    template: |
+      # Project Specification: {{project_name}}
+
+      ## Description
+      {{project_description}}
+
+      ## Technical Configuration
+      - **Type**: {{project_type}}
+      - **Languages**: {{languages}}
+      {% if python_framework %}- **Python Framework**: {{python_framework}}{% endif %}
+      {% if js_framework %}- **JS Framework**: {{js_framework}}{% endif %}
+
+      ## Data
+      - **Sources**: {{data_input}}
+      {% if database_type %}- **Database**: {{database_type}}{% endif %}
+
+      ## Organization
+      - **Team**: {{team_size}}
+      - **MVP Timeline**: {{timeline}}
+
+      ## Quality
+      - **Tests**: {{testing_strategy}}
+      - **Documentation**: {{documentation}}
+      {% if ci_cd %}- **CI/CD**: {{ci_cd}}{% endif %}
+
+      ## Deployment
+      - **Target**: {{deployment}}
+
+      {% if additional_notes %}
+      ## Additional Notes
+      {{additional_notes}}
+      {% endif %}
+
+  - type: prompt
+    name: "Startup Prompt"
+    template: |
+      I'm starting a project called "{{project_name}}".
+
+      Context: {{project_description}}
+
+      Tech stack:
+      - Type: {{project_type}}
+      - Languages: {{languages}}
+      {% if python_framework %}- Framework: {{python_framework}}{% endif %}
+
+      Can you propose a suitable project structure with:
+      1. Folder hierarchy
+      2. Essential configuration files
+      3. A basic code example
+
+      Constraints: {{additional_notes}}
