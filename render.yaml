@@ -15,8 +15,5 @@ services:
     staticPublishPath: dist
     envVars:
       - key: VITE_API_BASE
-        fromService:
-          name: questionnaire-backend
-          type: web
-          property: url
+        sync: false
     autoDeploy: true
