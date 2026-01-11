@@ -7,5 +7,5 @@ services:
     staticPublishPath: dist
     envVars:
       - key: VITE_API_BASE
-        sync: false
+        value: https://coherent-adena-modelling-assistant-4783ae21.koyeb.app
     autoDeploy: true
