@@ -35,7 +35,7 @@ function TemplateSelector({ onSelect }) {
     <div className="animate-fade-in">
       <div className="text-center mb-10">
         <h2 className="font-display text-3xl font-bold text-white mb-3">
-          Choose a questionnaire
+          Choose a ComPath
         </h2>
         <p className="text-ink-400 max-w-md mx-auto">
           Select a template to get started. Questions will dynamically adapt

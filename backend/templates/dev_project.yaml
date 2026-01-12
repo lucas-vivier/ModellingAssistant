@@ -1,9 +1,10 @@
 name: "Dev Project Onboarding"
-description: "Questionnaire to kick off a development project"
+description: "ComPath to kick off a development project"
 version: "1.0"
 
 questions:
   - id: project_name
+    section: "Project Basics"
     type: text
     question: "What is your project name?"
     placeholder: "E.g.: MyAppAPI"
@@ -34,6 +35,7 @@ questions:
     required: true
 
   - id: languages
+    section: "Tech Stack"
     type: multi_choice
     question: "What programming languages will be used?"
     options:
@@ -92,6 +94,7 @@ questions:
     required: true
 
   - id: data_input
+    section: "Data Sources"
     type: multi_choice
     question: "What are the input data sources?"
     options:
@@ -132,6 +135,7 @@ questions:
     required: true
 
   - id: team_size
+    section: "Team & Process"
     type: single_choice
     question: "What is the team size?"
     options:
@@ -198,6 +202,7 @@ questions:
     required: true
 
   - id: deployment
+    section: "Deployment"
     type: single_choice
     question: "Where will the project be deployed?"
     options:
@@ -216,6 +221,7 @@ questions:
     required: true
 
   - id: timeline
+    section: "Timeline & Notes"
     type: single_choice
     question: "What is the expected timeline for the MVP?"
     options:

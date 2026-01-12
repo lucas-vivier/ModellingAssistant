@@ -1,8 +1,9 @@
-"""FastAPI API for the dynamic questionnaire."""
+"""FastAPI API for the dynamic ComPath."""
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from typing import Any
 from pathlib import Path
 
 from engine import (
@@ -13,7 +14,7 @@ from engine import (
     generate_outputs,
 )
 
-app = FastAPI(title="Dynamic Questionnaire", version="1.0.0")
+app = FastAPI(title="ComPath", version="1.0.0")
 
 # CORS for the frontend
 app.add_middleware(
@@ -35,7 +36,7 @@ class StartRequest(BaseModel):
 class AnswerRequest(BaseModel):
     session_id: str
     question_id: str
-    answer: str | list[str]
+    answer: Any
 
 
 @app.get("/templates")
@@ -57,7 +58,7 @@ def list_templates():
 
 @app.post("/session/start")
 def start_session(request: StartRequest):
-    """Start a new questionnaire session."""
+    """Start a new ComPath session."""
     import uuid
     
     try:
@@ -75,7 +76,8 @@ def start_session(request: StartRequest):
     return {
         "session_id": session_id,
         "template_name": template.get("name"),
-        "description": template.get("description")
+        "description": template.get("description"),
+        "template": template
     }
 
 
@@ -117,7 +119,7 @@ def submit_answer(request: AnswerRequest):
 
 @app.get("/session/{session_id}/outputs")
 def get_outputs(session_id: str):
-    """Generate the final outputs for the questionnaire."""
+    """Generate the final outputs for the ComPath."""
     if session_id not in sessions:
         raise HTTPException(status_code=404, detail="Session not found")
     

@@ -1,27 +1,155 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { Check, Loader2 } from 'lucide-react'
 import QuestionCard from './QuestionCard'
 
 const API_BASE = import.meta.env.VITE_API_BASE || ''
 
-function Questionnaire({ sessionId, templateName, onComplete, onAnswerUpdate, onStatusUpdate }) {
+function Questionnaire({
+  sessionId,
+  onComplete,
+  onAnswerUpdate,
+  onStatusUpdate,
+  currentQuestionId,
+  onQuestionActivate
+}) {
   const [status, setStatus] = useState(null)
   const [localAnswers, setLocalAnswers] = useState({})
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState({})
-  const currentQuestionRef = useRef(null)
+  const [observedQuestionId, setObservedQuestionId] = useState(null)
+  const [showSections, setShowSections] = useState(true)
+  const questionRefs = useRef({})
+  const visibleRatios = useRef({})
   const saveTimeouts = useRef({})
 
   useEffect(() => {
     fetchStatus()
   }, [sessionId])
 
-  // Scroll to current question when it changes
-  useEffect(() => {
-    if (currentQuestionRef.current) {
-      currentQuestionRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  const activeQuestionId = currentQuestionId || status?.next_question?.id
+
+  const scrollToQuestion = useCallback((questionId, behavior = 'smooth') => {
+    if (!questionId) return
+    const element = questionRefs.current[questionId]
+    if (element) {
+      element.scrollIntoView({ behavior, block: 'start' })
     }
-  }, [status?.next_question?.id])
+  }, [])
+
+  // Scroll to active question when it changes
+  useEffect(() => {
+    scrollToQuestion(activeQuestionId)
+  }, [activeQuestionId, scrollToQuestion])
+
+  const { sections, questionSectionMap } = useMemo(() => {
+    const list = []
+    const map = {}
+    let currentSection = null
+
+    const shortSectionTitles = {
+      'Project Identification': 'Project',
+      'Datasets': 'Data',
+      'Model Type & Theoretical Framework': 'Model',
+      'Data Sources & Inputs': 'Data',
+      'Model Parameters & Calibration': 'Parameters',
+      'Sensitivity Analysis': 'Sensitivity',
+      'Uncertainty Quantification': 'Uncertainty',
+      'Validation & Verification': 'Validation',
+      'Outputs': 'Output',
+      'Outputs & Visualization': 'Output',
+      'Reproducibility & Replication Package': 'Replication',
+      'Reproducibility & Open Science': 'Reproducibility',
+      'Documentation & Data Availability': 'Documentation',
+      'Documentation': 'Documentation',
+      'Technical Stack & Tools': 'Tech Stack',
+      'Technical Implementation': 'Implementation',
+      'Project Timeline & Team': 'Timeline',
+      'Project Management & Governance': 'Management'
+    }
+
+    const slugify = (value) => value
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '')
+
+    if (!status?.questions) {
+      return { sections: list, questionSectionMap: map }
+    }
+
+    status.questions.forEach((question) => {
+      const sectionName = question.section || currentSection || 'General'
+      const shortTitle = shortSectionTitles[sectionName] || sectionName
+      if (!currentSection || question.section) {
+        if (sectionName !== currentSection) {
+          list.push({
+            id: slugify(sectionName) || 'general',
+            title: shortTitle,
+            questionIds: [],
+            total: 0,
+            answered: 0
+          })
+        }
+      }
+      currentSection = sectionName
+      const current = list[list.length - 1]
+      if (!current) return
+      current.questionIds.push(question.id)
+      current.total += 1
+      if (question.answered) {
+        current.answered += 1
+      }
+      map[question.id] = current.id
+    })
+
+    return { sections: list, questionSectionMap: map }
+  }, [status?.questions])
+
+  const activeSectionId = useMemo(() => {
+    if (activeQuestionId && questionSectionMap[activeQuestionId]) {
+      return questionSectionMap[activeQuestionId]
+    }
+    return sections[0]?.id || null
+  }, [activeQuestionId, questionSectionMap, sections])
+
+  const highlightSectionId = useMemo(() => {
+    if (observedQuestionId && questionSectionMap[observedQuestionId]) {
+      return questionSectionMap[observedQuestionId]
+    }
+    return activeSectionId
+  }, [activeSectionId, observedQuestionId, questionSectionMap])
+
+  useEffect(() => {
+    if (!status?.questions?.length) return undefined
+
+    visibleRatios.current = {}
+    const observer = new IntersectionObserver((entries) => {
+      let changed = false
+      entries.forEach((entry) => {
+        const id = entry.target.dataset.questionId
+        if (!id) return
+        if (entry.isIntersecting) {
+          visibleRatios.current[id] = entry.intersectionRatio
+          changed = true
+        } else if (visibleRatios.current[id]) {
+          delete visibleRatios.current[id]
+          changed = true
+        }
+      })
+
+      if (!changed) return
+      const best = Object.entries(visibleRatios.current)
+        .sort((a, b) => b[1] - a[1])[0]
+      if (best) {
+        setObservedQuestionId(best[0])
+      }
+    }, { threshold: [0.35, 0.6, 0.85] })
+
+    Object.values(questionRefs.current).forEach((el) => {
+      if (el) observer.observe(el)
+    })
+
+    return () => observer.disconnect()
+  }, [status?.questions])
 
   const fetchStatus = async () => {
     try {
@@ -123,59 +251,99 @@ function Questionnaire({ sessionId, templateName, onComplete, onAnswerUpdate, on
     )
   }
 
-  const { progress, questions, next_question } = status
+  const { questions } = status
 
   return (
     <div className="animate-fade-in">
-      {/* Header with progress */}
-      <div className="mb-8 sticky top-0 bg-ink-950/95 backdrop-blur-sm py-4 -mx-6 px-6 z-10">
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-sm text-ink-400">{templateName}</span>
-          <span className="text-sm text-ink-400">
-            {progress.answered} / {progress.total}
-          </span>
-        </div>
-        <div className="progress-bar">
-          <div
-            className="progress-fill"
-            style={{ width: `${progress.percentage}%` }}
-          />
-        </div>
-      </div>
-
-      {/* All questions */}
-      <div className="space-y-6">
-        {questions.map((question) => {
-          const isAnswered = question.answered
-          const isCurrent = question.id === next_question?.id
-          const isUpcoming = !isAnswered && !isCurrent
-          const isSaving = saving[question.id]
-
-          return (
-            <div
-              key={question.id}
-              ref={isCurrent ? currentQuestionRef : null}
-              className="relative"
-            >
-              <QuestionCard
-                question={question}
-                value={localAnswers[question.id] ?? question.answer ?? null}
-                onChange={(val) => handleAnswerChange(question.id, val)}
-                status={isAnswered ? 'answered' : isCurrent ? 'current' : 'upcoming'}
-                disabled={isUpcoming}
-              />
-              {isSaving && (
-                <div className="absolute top-4 right-4">
-                  <Loader2 className="w-4 h-4 text-ink-400 animate-spin" />
-                </div>
-              )}
+      {/* Sections + questions */}
+      <div className="flex flex-col lg:flex-row gap-4">
+        {sections.length > 1 && (
+          <div className="section-nav lg:sticky lg:top-20 lg:self-start lg:w-52">
+            <div className="section-nav-header">
+              <div className="section-nav-title">Sections</div>
+              <button
+                type="button"
+                className="section-nav-toggle"
+                onClick={() => setShowSections(prev => !prev)}
+              >
+                {showSections ? 'Hide' : 'Show'}
+              </button>
             </div>
-          )
-        })}
+            {showSections && (
+              <div className="section-nav-list">
+                {sections.map((section) => {
+                  const isActive = section.id === highlightSectionId
+                  const firstQuestionId = section.questionIds[0]
+                  return (
+                    <button
+                      key={section.id}
+                      type="button"
+                    onClick={() => {
+                      setObservedQuestionId(null)
+                      if (firstQuestionId) {
+                        onQuestionActivate?.(firstQuestionId)
+                        scrollToQuestion(firstQuestionId)
+                      }
+                    }}
+                      className={`section-nav-button ${isActive ? 'active' : ''}`}
+                    >
+                      <span>{section.title}</span>
+                      <span className="section-nav-count">
+                        {section.answered}/{section.total}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="space-y-5 flex-1">
+          {questions.map((question) => {
+            const isAnswered = question.answered
+            const isCurrent = question.id === activeQuestionId
+            const isUpcoming = !isAnswered && !isCurrent
+            const isSaving = saving[question.id]
+
+            return (
+              <div
+                key={question.id}
+                ref={(el) => {
+                  if (el) {
+                    questionRefs.current[question.id] = el
+                  } else {
+                    delete questionRefs.current[question.id]
+                  }
+                }}
+                data-question-id={question.id}
+                className="relative question-scroll-target"
+                onClick={() => {
+                  setObservedQuestionId(null)
+                  onQuestionActivate?.(question.id)
+                  scrollToQuestion(question.id)
+                }}
+              >
+                <QuestionCard
+                  question={question}
+                  value={localAnswers[question.id] ?? question.answer ?? null}
+                  onChange={(val) => handleAnswerChange(question.id, val)}
+                  status={isAnswered ? 'answered' : isCurrent ? 'current' : 'upcoming'}
+                  disabled={false}
+                />
+                {isSaving && (
+                  <div className="absolute top-4 right-4">
+                    <Loader2 className="w-4 h-4 text-ink-400 animate-spin" />
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
       </div>
 
       {/* Finish button */}
-      <div className="flex justify-end mt-8 pb-8">
+      <div className="flex justify-end mt-6 pb-6">
         <button
           onClick={handleFinish}
           disabled={!canFinish()}

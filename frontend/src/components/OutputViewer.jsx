@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { FileText, Copy, Check, RefreshCw, Download } from 'lucide-react'
+import { FileText, Copy, Check, RefreshCw, Download, Sparkles } from 'lucide-react'
+import PromptViewer from './PromptViewer'
 
 function OutputViewer({ outputs, onRestart }) {
   const [activeTab, setActiveTab] = useState(0)
@@ -68,7 +69,7 @@ function OutputViewer({ outputs, onRestart }) {
           <Check className="w-8 h-8 text-accent" />
         </div>
         <h2 className="font-display text-2xl font-bold text-white mb-2">
-          Questionnaire complete!
+          ComPath complete!
         </h2>
         <p className="text-ink-400">
           Here are the documents generated from your answers
@@ -82,12 +83,17 @@ function OutputViewer({ outputs, onRestart }) {
             <button
               key={index}
               onClick={() => setActiveTab(index)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
                 activeTab === index
                   ? 'bg-accent text-white'
                   : 'bg-ink-800 text-ink-400 hover:text-white'
               }`}
             >
+              {output.type === 'prompt' ? (
+                <Sparkles className="w-3.5 h-3.5" />
+              ) : (
+                <FileText className="w-3.5 h-3.5" />
+              )}
               {output.name}
             </button>
           ))}
@@ -95,39 +101,43 @@ function OutputViewer({ outputs, onRestart }) {
       )}
 
       {/* Output content */}
-      <div className="question-card">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2 text-ink-400">
-            <FileText className="w-4 h-4" />
-            <span className="text-sm">{currentOutput.name}</span>
+      {currentOutput.type === 'prompt' ? (
+        <PromptViewer content={currentOutput.content} name={currentOutput.name} />
+      ) : (
+        <div className="question-card">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2 text-ink-400">
+              <FileText className="w-4 h-4" />
+              <span className="text-sm">{currentOutput.name}</span>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => copyToClipboard(currentOutput.content)}
+                className="p-2 text-ink-400 hover:text-white hover:bg-ink-800 rounded-lg transition-colors"
+                title="Copy"
+              >
+                {copied ? (
+                  <Check className="w-4 h-4 text-green-400" />
+                ) : (
+                  <Copy className="w-4 h-4" />
+                )}
+              </button>
+              <button
+                onClick={() => downloadAsFile(currentOutput.content, `${currentOutput.name}.md`)}
+                className="p-2 text-ink-400 hover:text-white hover:bg-ink-800 rounded-lg transition-colors"
+                title="Download"
+              >
+                <Download className="w-4 h-4" />
+              </button>
+            </div>
           </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => copyToClipboard(currentOutput.content)}
-              className="p-2 text-ink-400 hover:text-white hover:bg-ink-800 rounded-lg transition-colors"
-              title="Copy"
-            >
-              {copied ? (
-                <Check className="w-4 h-4 text-green-400" />
-              ) : (
-                <Copy className="w-4 h-4" />
-              )}
-            </button>
-            <button
-              onClick={() => downloadAsFile(currentOutput.content, `${currentOutput.name}.md`)}
-              className="p-2 text-ink-400 hover:text-white hover:bg-ink-800 rounded-lg transition-colors"
-              title="Download"
-            >
-              <Download className="w-4 h-4" />
-            </button>
-          </div>
+
+          <div
+            className="prose prose-invert max-w-none"
+            dangerouslySetInnerHTML={{ __html: renderMarkdown(currentOutput.content) }}
+          />
         </div>
-        
-        <div 
-          className="prose prose-invert max-w-none"
-          dangerouslySetInnerHTML={{ __html: renderMarkdown(currentOutput.content) }}
-        />
-      </div>
+      )}
 
       {/* Actions */}
       <div className="flex justify-center mt-8">
@@ -136,7 +146,7 @@ function OutputViewer({ outputs, onRestart }) {
           className="btn-secondary flex items-center gap-2"
         >
           <RefreshCw className="w-4 h-4" />
-          New questionnaire
+          New ComPath
         </button>
       </div>
     </div>

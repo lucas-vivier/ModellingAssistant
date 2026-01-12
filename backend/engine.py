@@ -1,4 +1,4 @@
-"""Dynamic questionnaire engine."""
+"""Dynamic ComPath engine."""
 
 import yaml
 from pathlib import Path
@@ -63,7 +63,7 @@ def get_next_question(template: dict, answers: dict) -> dict | None:
     Return the next question to display.
 
     Returns:
-        The next question or None if the questionnaire is complete.
+        The next question or None if the ComPath is complete.
     """
     for question in template["questions"]:
         qid = question["id"]
@@ -93,7 +93,7 @@ def get_all_visible_questions(template: dict, answers: dict) -> list[dict]:
 
 
 def calculate_progress(template: dict, answers: dict) -> dict:
-    """Calculate questionnaire progress."""
+    """Calculate ComPath progress."""
     visible = get_all_visible_questions(template, answers)
     answered = sum(1 for q in visible if q["answered"])
     total = len(visible)
@@ -114,7 +114,62 @@ def render_output(template_str: str, answers: dict) -> str:
     - {% if variable %}...{% endif %}: basic conditional
     """
     import re
+
+    def format_data_inventory(entries: list[dict]) -> str:
+        if not entries:
+            return ""
+        headers = [
+            "Dataset",
+            "Source type",
+            "Source link",
+            "Resolution",
+            "Format",
+            "Privacy",
+            "Size",
+            "Test extract"
+        ]
+        rows = []
+        source_type_labels = {
+            "survey_micro": "Household/firm survey data",
+            "admin_data": "Administrative data",
+            "satellite": "Satellite / Remote sensing data",
+            "time_series": "Time series (macro indicators)",
+            "cross_section": "Cross-sectional data",
+            "panel": "Panel data",
+            "experimental": "Experimental / RCT data",
+            "synthetic": "Synthetic / Simulated data",
+            "literature": "Parameters from literature",
+            "api": "External API (World Bank, IEA, etc.)"
+        }
+        privacy_labels = {
+            "public": "Public",
+            "restricted_shareable": "Restricted (shareable with agreement)",
+            "confidential": "Confidential"
+        }
+
+        for entry in entries:
+            source_type = source_type_labels.get(entry.get("source_type"), entry.get("source_type", ""))
+            privacy = privacy_labels.get(entry.get("privacy"), entry.get("privacy", ""))
+            rows.append([
+                entry.get("dataset_name", ""),
+                source_type or "",
+                entry.get("source_link", ""),
+                entry.get("resolution", ""),
+                entry.get("data_format", ""),
+                privacy or "",
+                entry.get("size", ""),
+                entry.get("extract_plan", "")
+            ])
+
+        table = ["| " + " | ".join(headers) + " |", "| " + " | ".join(["---"] * len(headers)) + " |"]
+        for row in rows:
+            table.append("| " + " | ".join(str(cell) if cell is not None else "" for cell in row) + " |")
+        return "\n".join(table)
     
+    expanded_answers = dict(answers)
+    if isinstance(answers.get("data_inventory"), list):
+        expanded_answers["data_inventory_table"] = format_data_inventory(answers["data_inventory"])
+
     result = template_str
     
     # Handle conditionals: {% if var %}...{% endif %}
@@ -123,16 +178,19 @@ def render_output(template_str: str, answers: dict) -> str:
     def replace_conditional(match):
         var_name = match.group(1)
         content = match.group(2)
-        if answers.get(var_name):
+        if expanded_answers.get(var_name):
             return content
         return ""
     
     result = re.sub(pattern, replace_conditional, result, flags=re.DOTALL)
     
     # Replace variables: {{var}}
-    for key, value in answers.items():
+    for key, value in expanded_answers.items():
         if isinstance(value, list):
-            value = ", ".join(value)
+            if all(isinstance(item, str) for item in value):
+                value = ", ".join(value)
+            else:
+                value = str(value)
         result = result.replace(f"{{{{{key}}}}}", str(value) if value else "")
     
     return result.strip()

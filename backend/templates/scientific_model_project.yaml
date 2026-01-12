@@ -1,0 +1,1263 @@
+name: "Scientific Model Development"
+description: "Guided ComPath for developing reproducible scientific models (energy economics, climate economics, numerical simulations) following publication-ready best practices"
+version: "1.0"
+domain: "scientific_modeling"
+
+# ==============================================================================
+questions:
+# SECTION 1: PROJECT IDENTIFICATION
+# ==============================================================================
+  - id: project_name
+    section: "Project Identification"
+    type: text
+    question: "What is your project/model name?"
+    placeholder: "E.g.: HouseholdEnergyDemandModel"
+    help: "Use a descriptive name without spaces (CamelCase or snake_case)"
+    required: false
+    default: "MyScientificModel"
+
+  - id: project_acronym
+    type: text
+    question: "Project acronym (optional)"
+    placeholder: "E.g.: HEDM"
+    required: false
+
+  - id: project_description
+    type: textarea
+    question: "Describe the scientific objective of this model"
+    placeholder: "What phenomenon are you modeling? What hypothesis are you testing? What policy question does it address?"
+    help: "Be specific about the research question and expected contribution"
+    required: false
+    default: "A scientific model for quantitative analysis and simulation."
+
+  - id: model_domain
+    type: single_choice
+    question: "What is the primary domain of your project?"
+    options:
+      - id: energy_economics
+        label: "Energy economics"
+      - id: climate_economics
+        label: "Climate economics / IAM"
+      - id: household_behavior
+        label: "Household behavior / Microeconomics"
+      - id: macroeconomic
+        label: "Macroeconomic modeling"
+      - id: optimization
+        label: "Optimization / Operations research"
+      - id: agent_based
+        label: "Agent-based modeling"
+      - id: statistical
+        label: "Statistical / Econometric model"
+      - id: machine_learning
+        label: "Machine learning / Predictive model"
+      - id: other
+        label: "Other"
+    required: false
+    default: "statistical"
+
+  - id: target_publication
+    type: multi_choice
+    question: "What is the intended output for this work?"
+    options:
+      - id: nature_portfolio
+        label: "Nature Portfolio journals"
+      - id: top_econ
+        label: "Top economics journals (AER, QJE, Econometrica, etc.)"
+      - id: field_journal
+        label: "Field journal (Energy Policy, Energy Economics, etc.)"
+      - id: working_paper
+        label: "Working paper (World Bank, NBER, etc.)"
+      - id: policy_report
+        label: "Policy report / Technical documentation"
+      - id: internal
+        label: "Internal use only"
+    required: false
+    default: ["working_paper"]
+
+  - id: institution_type
+    type: single_choice
+    question: "What type of institution are you working for?"
+    options:
+      - id: world_bank
+        label: "World Bank / International organization"
+      - id: university
+        label: "University / Research institution"
+      - id: government
+        label: "Government agency"
+      - id: ngo
+        label: "NGO / Think tank"
+      - id: private
+        label: "Private sector"
+    required: false
+    default: "university"
+
+# ==============================================================================
+# SECTION 2: DATASETS
+# ==============================================================================
+  - id: data_inventory
+    section: "Datasets"
+    type: repeatable
+    question: "List each dataset and its details"
+    help: "Add one entry per dataset with source, link, resolution, format, privacy, and extract plan if needed."
+    required: false
+    fields:
+      - id: dataset_name
+        label: "Dataset name"
+        type: text
+        placeholder: "E.g.: National Household Survey 2022"
+      - id: source_type
+        label: "Source type"
+        type: single_choice
+        options:
+          - id: survey_micro
+            label: "Household/firm survey data"
+          - id: admin_data
+            label: "Administrative data"
+          - id: satellite
+            label: "Satellite / Remote sensing data"
+          - id: time_series
+            label: "Time series (macro indicators)"
+          - id: cross_section
+            label: "Cross-sectional data"
+          - id: panel
+            label: "Panel data"
+          - id: experimental
+            label: "Experimental / RCT data"
+          - id: synthetic
+            label: "Synthetic / Simulated data"
+          - id: literature
+            label: "Parameters from literature"
+          - id: api
+            label: "External API (World Bank, IEA, etc.)"
+      - id: source_link
+        label: "Source link"
+        type: text
+        placeholder: "https://..."
+      - id: resolution
+        label: "Resolution"
+        type: text
+        placeholder: "E.g.: Monthly, 1km grid, national"
+      - id: data_format
+        label: "Format"
+        type: text
+        placeholder: "E.g.: CSV, NetCDF, Parquet"
+      - id: privacy
+        label: "Privacy"
+        type: single_choice
+        options:
+          - id: public
+            label: "Public"
+          - id: restricted_shareable
+            label: "Restricted (shareable with agreement)"
+          - id: confidential
+            label: "Confidential"
+      - id: size
+        label: "Size"
+        type: text
+        placeholder: "E.g.: 12 GB, 5M rows"
+      - id: extract_plan
+        label: "Test extract (if large)"
+        type: text
+        placeholder: "E.g.: 5% stratified sample by region and year"
+
+# ==============================================================================
+# SECTION 3: MODEL PARAMETERS & CALIBRATION
+# ==============================================================================
+  - id: parameter_types
+    section: "Model Parameters & Calibration"
+    type: multi_choice
+    question: "How are model parameters determined?"
+    options:
+      - id: estimated
+        label: "Estimated from data (econometrics, ML)"
+      - id: calibrated
+        label: "Calibrated to match moments/targets"
+      - id: literature
+        label: "Taken from literature"
+      - id: assumed
+        label: "Assumed / Expert judgment"
+      - id: external
+        label: "From external models/databases"
+    required: false
+    default: ["literature", "assumed"]
+
+  - id: calibration_targets
+    type: textarea
+    question: "What are your calibration targets or moments to match?"
+    placeholder: "E.g.: Match aggregate energy consumption, Gini coefficient, price elasticity from literature..."
+    help: "Be specific about what empirical facts the model should reproduce"
+    required: false
+    default: ""
+    conditions:
+      - field: parameter_types
+        operator: contains
+        value: calibrated
+
+  - id: parameter_uncertainty
+    type: single_choice
+    question: "How will you handle parameter uncertainty?"
+    options:
+      - id: point_estimate
+        label: "Point estimates only (not recommended)"
+      - id: confidence_intervals
+        label: "Confidence intervals from estimation"
+      - id: bayesian
+        label: "Bayesian posterior distributions"
+      - id: ranges
+        label: "Plausible ranges from literature"
+      - id: elicitation
+        label: "Expert elicitation"
+    required: false
+    default: "ranges"
+
+  - id: param_documentation
+    type: single_choice
+    question: "Will all parameters be documented in a parameter table?"
+    options:
+      - id: yes_full
+        label: "Yes, with sources and uncertainty ranges"
+      - id: yes_basic
+        label: "Yes, basic table"
+      - id: no
+        label: "No (not recommended for publication)"
+    required: false
+    default: "yes_basic"
+
+  - id: model_type
+    type: single_choice
+    question: "What type of model are you building?"
+    options:
+      - id: structural
+        label: "Structural model (theory-driven with calibration)"
+      - id: reduced_form
+        label: "Reduced-form / Econometric model"
+      - id: simulation
+        label: "Numerical simulation"
+      - id: optimization
+        label: "Optimization model"
+      - id: hybrid
+        label: "Hybrid (structural + ML/statistical)"
+    required: false
+    default: "reduced_form"
+
+  - id: theoretical_foundation
+    type: textarea
+    question: "Describe the theoretical foundation of your model"
+    placeholder: "Key equations, behavioral assumptions, economic theory, physical laws..."
+    help: "This will help structure the model equations and ensure theoretical consistency"
+    required: false
+    default: ""
+    conditions:
+      - field: model_type
+        operator: in
+        value: [structural, hybrid, optimization]
+
+  - id: key_equations
+    type: textarea
+    question: "List the main equations or relationships in your model (LaTeX notation accepted)"
+    placeholder: "E.g.: U(c,l) = c^α * l^(1-α); Budget constraint: p*c + w*l = Y"
+    help: "These will be documented and implemented in the code"
+    required: false
+
+# ==============================================================================
+# SECTION 5: OUTPUTS & VISUALIZATION
+# ==============================================================================
+  - id: output_types
+    section: "Outputs & Visualization"
+    type: multi_choice
+    question: "What types of outputs will your model produce?"
+    options:
+      - id: tables
+        label: "Tables (regression, summary statistics)"
+      - id: figures_static
+        label: "Static figures (plots, maps)"
+      - id: figures_interactive
+        label: "Interactive visualizations"
+      - id: datasets
+        label: "Output datasets"
+      - id: reports
+        label: "Automated reports"
+    required: false
+    default: ["tables", "figures_static"]
+
+  - id: figure_formats
+    type: multi_choice
+    question: "What figure formats are needed?"
+    options:
+      - id: pdf
+        label: "PDF (publication quality)"
+      - id: png
+        label: "PNG (high resolution)"
+      - id: svg
+        label: "SVG (vector graphics)"
+      - id: eps
+        label: "EPS (LaTeX compatible)"
+    required: false
+    default: ["pdf", "png"]
+
+  - id: table_format
+    type: multi_choice
+    question: "What table output formats are needed?"
+    options:
+      - id: latex
+        label: "LaTeX (.tex)"
+      - id: csv
+        label: "CSV"
+      - id: excel
+        label: "Excel (.xlsx)"
+      - id: html
+        label: "HTML"
+      - id: markdown
+        label: "Markdown"
+    required: false
+    default: ["csv", "latex"]
+
+# ==============================================================================
+# SECTION 6: VALIDATION & VERIFICATION
+# ==============================================================================
+  - id: validation_approach
+    section: "Validation & Verification"
+    type: multi_choice
+    question: "How will you validate your model?"
+    options:
+      - id: out_of_sample
+        label: "Out-of-sample prediction"
+      - id: cross_validation
+        label: "Cross-validation"
+      - id: historical
+        label: "Historical backcasting"
+      - id: external_comparison
+        label: "Comparison with other models"
+      - id: stylized_facts
+        label: "Match stylized facts"
+      - id: expert_review
+        label: "Expert review"
+      - id: none
+        label: "No formal validation (not recommended)"
+    required: false
+    default: ["stylized_facts"]
+
+  - id: verification_tests
+    type: multi_choice
+    question: "What verification tests will you perform?"
+    options:
+      - id: unit_tests
+        label: "Unit tests for functions"
+      - id: analytical_cases
+        label: "Analytical test cases"
+      - id: limiting_cases
+        label: "Limiting/boundary cases"
+      - id: conservation
+        label: "Conservation/balance checks"
+      - id: convergence
+        label: "Numerical convergence tests"
+      - id: none
+        label: "None (not recommended)"
+    help: "Verification ensures the code correctly implements the model"
+    required: false
+    default: ["unit_tests"]
+
+# ==============================================================================
+# SECTION 7: SENSITIVITY ANALYSIS
+# ==============================================================================
+  - id: sensitivity_type
+    section: "Sensitivity Analysis"
+    type: multi_choice
+    question: "What type of sensitivity analysis will you perform?"
+    options:
+      - id: none
+        label: "None (not recommended)"
+      - id: oat
+        label: "One-at-a-time (OAT) / Local sensitivity"
+      - id: morris
+        label: "Morris screening method"
+      - id: sobol
+        label: "Sobol indices (variance-based GSA)"
+      - id: fast
+        label: "FAST / eFAST"
+      - id: delta
+        label: "Delta moment-independent measure"
+      - id: scenario
+        label: "Scenario analysis"
+      - id: monte_carlo
+        label: "Monte Carlo simulation"
+    help: "Global sensitivity analysis (Sobol, Morris) is strongly recommended for publication"
+    required: false
+    default: ["oat"]
+
+  - id: sensitivity_parameters
+    type: textarea
+    question: "Which parameters will be included in sensitivity analysis?"
+    placeholder: "List the key uncertain parameters and their plausible ranges"
+    required: false
+    default: "All key model parameters."
+    conditions:
+      - field: sensitivity_type
+        operator: not_contains
+        value: none
+
+  - id: sensitivity_outputs
+    type: multi_choice
+    question: "What outputs will you analyze for sensitivity?"
+    options:
+      - id: main_outcome
+        label: "Main outcome variable(s)"
+      - id: welfare
+        label: "Welfare measures"
+      - id: distributional
+        label: "Distributional outcomes"
+      - id: intermediate
+        label: "Intermediate model outputs"
+      - id: all_figures
+        label: "All figures/tables in the paper"
+    required: false
+    default: ["main_outcome"]
+    conditions:
+      - field: sensitivity_type
+        operator: not_contains
+        value: none
+
+# ==============================================================================
+# SECTION 8: UNCERTAINTY QUANTIFICATION
+# ==============================================================================
+  - id: uq_approach
+    section: "Uncertainty Quantification"
+    type: multi_choice
+    question: "How will you quantify and propagate uncertainty?"
+    options:
+      - id: none
+        label: "Not planned (not recommended)"
+      - id: analytical
+        label: "Analytical error propagation"
+      - id: monte_carlo
+        label: "Monte Carlo propagation"
+      - id: bootstrap
+        label: "Bootstrap / Resampling"
+      - id: bayesian
+        label: "Bayesian inference"
+      - id: polynomial_chaos
+        label: "Polynomial chaos expansion"
+      - id: surrogate
+        label: "Surrogate/emulator-based UQ"
+    help: "Uncertainty quantification is essential for credible policy recommendations"
+    required: false
+    default: ["monte_carlo"]
+
+  - id: uncertainty_sources
+    type: multi_choice
+    question: "What sources of uncertainty will you consider?"
+    options:
+      - id: parameter
+        label: "Parameter uncertainty"
+      - id: data
+        label: "Data/measurement uncertainty"
+      - id: model_structure
+        label: "Model structure uncertainty"
+      - id: scenario
+        label: "Scenario/future uncertainty"
+      - id: computational
+        label: "Numerical/computational uncertainty"
+    required: false
+    default: ["parameter"]
+    conditions:
+      - field: uq_approach
+        operator: not_contains
+        value: none
+
+  - id: confidence_reporting
+    type: single_choice
+    question: "How will you report uncertainty in results?"
+    options:
+      - id: ci
+        label: "Confidence/credible intervals"
+      - id: se
+        label: "Standard errors"
+      - id: distributions
+        label: "Full distributions (histograms, density plots)"
+      - id: scenarios
+        label: "Scenario ranges"
+      - id: mixed
+        label: "Combination of above"
+    required: false
+    default: "ci"
+    conditions:
+      - field: uq_approach
+        operator: not_contains
+        value: none
+
+# ==============================================================================
+# SECTION 9: REPRODUCIBILITY & REPLICATION PACKAGE
+# ==============================================================================
+  - id: reproducibility_standard
+    section: "Reproducibility & Replication Package"
+    type: single_choice
+    question: "What reproducibility standard will you follow?"
+    options:
+      - id: world_bank
+        label: "World Bank DIME standards"
+      - id: aer
+        label: "AEA Data Editor standards"
+      - id: nature
+        label: "Nature Portfolio guidelines"
+      - id: custom
+        label: "Custom / Organization-specific"
+      - id: basic
+        label: "Basic reproducibility only"
+    required: false
+    default: "basic"
+
+  - id: code_structure
+    type: single_choice
+    question: "Will you use a master script to run all analysis?"
+    options:
+      - id: yes_full
+        label: "Yes, single master script runs everything"
+      - id: yes_modular
+        label: "Yes, master script with modular components"
+      - id: no
+        label: "No (not recommended)"
+    help: "A master script is required by most journals and World Bank"
+    required: false
+    default: "yes_modular"
+
+  - id: random_seed
+    type: single_choice
+    question: "Will you set random seeds for reproducibility?"
+    options:
+      - id: yes_documented
+        label: "Yes, documented in master script"
+      - id: yes_basic
+        label: "Yes, but not centralized"
+      - id: no
+        label: "No (not recommended)"
+    required: false
+    default: "yes_documented"
+
+  - id: environment_management
+    type: single_choice
+    question: "How will you manage the computational environment?"
+    options:
+      - id: requirements
+        label: "requirements.txt / environment.yml"
+      - id: docker
+        label: "Docker container"
+      - id: venv
+        label: "Virtual environment (venv/conda)"
+      - id: none
+        label: "No environment management (not recommended)"
+    required: false
+    default: "requirements"
+
+  - id: version_control
+    type: single_choice
+    question: "Will you use version control?"
+    options:
+      - id: github
+        label: "GitHub"
+      - id: gitlab
+        label: "GitLab"
+      - id: bitbucket
+        label: "Bitbucket"
+      - id: other
+        label: "Other VCS"
+      - id: no
+        label: "No (not recommended)"
+    required: false
+    default: "github"
+
+  - id: data_publication
+    type: single_choice
+    question: "Where will you publish the replication data?"
+    options:
+      - id: zenodo
+        label: "Zenodo"
+      - id: dataverse
+        label: "Harvard Dataverse"
+      - id: world_bank
+        label: "World Bank Microdata Catalog"
+      - id: osf
+        label: "Open Science Framework (OSF)"
+      - id: journal
+        label: "Journal supplementary materials"
+      - id: github
+        label: "GitHub (for code only)"
+      - id: restricted
+        label: "Data cannot be published (will document)"
+    required: false
+    default: "github"
+
+# ==============================================================================
+# SECTION 10: DOCUMENTATION
+# ==============================================================================
+  - id: documentation_types
+    section: "Documentation"
+    type: multi_choice
+    question: "What documentation will you produce?"
+    options:
+      - id: readme
+        label: "README with setup instructions"
+      - id: data_dictionary
+        label: "Data dictionary / Codebook"
+      - id: method_appendix
+        label: "Technical/methodological appendix"
+      - id: api_docs
+        label: "Code API documentation"
+      - id: user_guide
+        label: "User guide"
+      - id: model_description
+        label: "Model description document"
+    required: false
+    default: ["readme"]
+
+  - id: readme_template
+    type: single_choice
+    question: "Will you use a standardized README template?"
+    options:
+      - id: social_science
+        label: "Social Science Data Editors template"
+      - id: world_bank
+        label: "World Bank template"
+      - id: custom
+        label: "Custom template"
+      - id: none
+        label: "No template"
+    required: false
+    default: "custom"
+
+# ==============================================================================
+# SECTION 11: TECHNICAL IMPLEMENTATION
+# ==============================================================================
+  - id: programming_language
+    section: "Technical Implementation"
+    type: single_choice
+    question: "What is the primary programming language?"
+    options:
+      - id: python
+        label: "Python"
+      - id: r
+        label: "R"
+      - id: stata
+        label: "Stata"
+      - id: matlab
+        label: "MATLAB"
+      - id: julia
+        label: "Julia"
+      - id: mixed
+        label: "Multiple languages"
+    required: false
+    default: "python"
+
+  - id: python_libraries
+    type: multi_choice
+    question: "Which Python libraries will you use?"
+    options:
+      - id: numpy
+        label: "NumPy (numerical computing)"
+      - id: pandas
+        label: "Pandas (data manipulation)"
+      - id: scipy
+        label: "SciPy (scientific computing)"
+      - id: statsmodels
+        label: "Statsmodels (econometrics)"
+      - id: sklearn
+        label: "Scikit-learn (ML)"
+      - id: salib
+        label: "SALib (sensitivity analysis)"
+      - id: uqpy
+        label: "UQpy (uncertainty quantification)"
+      - id: matplotlib
+        label: "Matplotlib (visualization)"
+      - id: seaborn
+        label: "Seaborn (statistical visualization)"
+      - id: plotly
+        label: "Plotly (interactive plots)"
+      - id: geopandas
+        label: "GeoPandas (geospatial)"
+      - id: pyomo
+        label: "Pyomo (optimization)"
+      - id: cvxpy
+        label: "CVXPY (convex optimization)"
+    conditions:
+      - field: programming_language
+        operator: in
+        value: [python, mixed]
+    required: false
+    default: ["numpy", "pandas", "matplotlib"]
+
+  - id: computational_requirements
+    type: single_choice
+    question: "What are the computational requirements?"
+    options:
+      - id: laptop
+        label: "Standard laptop (< 30 min runtime)"
+      - id: workstation
+        label: "Workstation (< 24 hours)"
+      - id: hpc
+        label: "HPC cluster required"
+      - id: cloud
+        label: "Cloud computing (AWS, GCP, Azure)"
+    required: false
+    default: "laptop"
+
+  - id: parallelization
+    type: single_choice
+    question: "Will you use parallel computing?"
+    options:
+      - id: no
+        label: "No"
+      - id: multiprocessing
+        label: "Yes, multiprocessing (local)"
+      - id: distributed
+        label: "Yes, distributed computing"
+      - id: gpu
+        label: "Yes, GPU acceleration"
+    required: false
+    default: "no"
+
+# ==============================================================================
+# SECTION 12: PROJECT TIMELINE & TEAM
+# ==============================================================================
+  - id: team_size
+    section: "Project Timeline & Team"
+    type: single_choice
+    question: "What is the team size?"
+    options:
+      - id: solo
+        label: "Solo researcher"
+      - id: small
+        label: "Small team (2-3)"
+      - id: medium
+        label: "Medium team (4-6)"
+      - id: large
+        label: "Large team (7+)"
+    required: false
+    default: "solo"
+
+  - id: timeline
+    type: single_choice
+    question: "What is the expected project timeline?"
+    options:
+      - id: short
+        label: "< 3 months"
+      - id: medium
+        label: "3-6 months"
+      - id: long
+        label: "6-12 months"
+      - id: extended
+        label: "> 12 months"
+    required: false
+    default: "medium"
+
+  - id: additional_notes
+    type: textarea
+    question: "Any additional information or constraints?"
+    placeholder: "Specific requirements, constraints, integration with existing systems..."
+    required: false
+
+# ==============================================================================
+# OUTPUTS
+# ==============================================================================
+outputs:
+  # Technical Specification Document
+  - type: markdown
+    name: "Technical Specification"
+    template: |
+      # Technical Specification: {{project_name}}
+      {% if project_acronym %}**({{project_acronym}})**{% endif %}
+
+      ## 1. Project Overview
+      {{project_description}}
+
+      **Target publication**: {{target_publication}}
+      **Institution**: {{institution_type}}
+
+      ## 2. Datasets
+      {% if data_inventory_table %}
+      ### Data Inventory Table
+      {{data_inventory_table}}
+      {% endif %}
+
+      ## 3. Parameters & Calibration
+      - **Parameter determination**: {{parameter_types}}
+      {% if calibration_targets %}- **Calibration targets**: {{calibration_targets}}{% endif %}
+      - **Uncertainty handling**: {{parameter_uncertainty}}
+      - **Documentation**: {{param_documentation}}
+
+      ## 4. Model Type & Theoretical Framework
+      - **Model domain**: {{model_domain}}
+      - **Model type**: {{model_type}}
+      {% if theoretical_foundation %}{{theoretical_foundation}}{% endif %}
+      {% if key_equations %}
+      ### Key Equations
+      {{key_equations}}
+      {% endif %}
+
+      ## 5. Outputs
+      - **Types**: {{output_types}}
+      - **Figure formats**: {{figure_formats}}
+      - **Table formats**: {{table_format}}
+
+      ## 6. Validation & Verification
+      - **Validation approach**: {{validation_approach}}
+      - **Verification tests**: {{verification_tests}}
+
+      ## 7. Sensitivity Analysis
+      - **Methods**: {{sensitivity_type}}
+      {% if sensitivity_parameters %}- **Parameters analyzed**: {{sensitivity_parameters}}{% endif %}
+      {% if sensitivity_outputs %}- **Outputs analyzed**: {{sensitivity_outputs}}{% endif %}
+
+      ## 8. Uncertainty Quantification
+      - **Approach**: {{uq_approach}}
+      {% if uncertainty_sources %}- **Sources considered**: {{uncertainty_sources}}{% endif %}
+      {% if confidence_reporting %}- **Reporting format**: {{confidence_reporting}}{% endif %}
+
+      ## 9. Reproducibility
+      - **Standard**: {{reproducibility_standard}}
+      - **Master script**: {{code_structure}}
+      - **Random seeds**: {{random_seed}}
+      - **Environment**: {{environment_management}}
+      - **Version control**: {{version_control}}
+      - **Data publication**: {{data_publication}}
+
+      ## 10. Documentation
+      - **Types**: {{documentation_types}}
+      - **README template**: {{readme_template}}
+
+      ## 11. Technical Stack
+      - **Language**: {{programming_language}}
+      {% if python_libraries %}- **Libraries**: {{python_libraries}}{% endif %}
+      - **Computational requirements**: {{computational_requirements}}
+      - **Parallelization**: {{parallelization}}
+
+      ## 12. Project Management
+      - **Team size**: {{team_size}}
+      - **Timeline**: {{timeline}}
+
+      {% if additional_notes %}
+      ## Additional Notes
+      {{additional_notes}}
+      {% endif %}
+
+  # Replication Package Structure
+  - type: markdown
+    name: "Replication Package Structure"
+    template: |
+      # Replication Package Structure: {{project_name}}
+
+      ```
+      {{project_name}}/
+      ├── README.md                    # Setup and execution instructions
+      ├── LICENSE                      # MIT or BSD-3 license
+      ├── requirements.txt             # Python dependencies
+      ├── environment.yml              # Conda environment (alternative)
+      ├── Dockerfile                   # Docker container (optional)
+      ├── run_all.py                   # Master script - runs entire analysis
+      │
+      ├── config/
+      │   ├── config.yaml              # Main configuration file
+      │   ├── parameters.yaml          # Model parameters with sources
+      │   └── paths.yaml               # File paths configuration
+      │
+      ├── data/
+      │   ├── raw/                     # Original, immutable data
+      │   │   └── .gitkeep
+      │   ├── processed/               # Cleaned, transformed data
+      │   │   └── .gitkeep
+      │   └── external/                # Data from external sources
+      │       └── .gitkeep
+      │
+      ├── src/
+      │   ├── __init__.py
+      │   ├── data/
+      │   │   ├── __init__.py
+      │   │   ├── load.py              # Data loading functions
+      │   │   ├── clean.py             # Data cleaning functions
+      │   │   └── transform.py         # Data transformation
+      │   │
+      │   ├── model/
+      │   │   ├── __init__.py
+      │   │   ├── equations.py         # Model equations
+      │   │   ├── calibration.py       # Calibration routines
+      │   │   ├── solver.py            # Model solver
+      │   │   └── simulation.py        # Simulation functions
+      │   │
+      │   ├── analysis/
+      │   │   ├── __init__.py
+      │   │   ├── sensitivity.py       # Sensitivity analysis (SALib)
+      │   │   ├── uncertainty.py       # Uncertainty quantification
+      │   │   └── validation.py        # Model validation
+      │   │
+      │   └── utils/
+      │       ├── __init__.py
+      │       ├── io.py                # Input/output utilities
+      │       ├── plotting.py          # Visualization functions
+      │       └── tables.py            # Table generation
+      │
+      ├── notebooks/                   # Jupyter notebooks (exploration)
+      │   └── 01_exploratory_analysis.ipynb
+      │
+      ├── tests/
+      │   ├── __init__.py
+      │   ├── test_data.py
+      │   ├── test_model.py
+      │   └── test_analytical_cases.py
+      │
+      ├── outputs/
+      │   ├── figures/                 # Publication-ready figures
+      │   ├── tables/                  # Publication-ready tables
+      │   └── logs/                    # Execution logs
+      │
+      └── docs/
+          ├── data_dictionary.md       # Variable definitions
+          ├── methodology.md           # Technical appendix
+          ├── parameters_table.md      # All parameters with sources
+          └── reproducibility_report.md
+      ```
+
+  # Main Prompt for Claude
+  - type: prompt
+    name: "Model Development Prompt"
+    template: |
+      I am developing a scientific model called "{{project_name}}" for {{model_domain}}.
+
+      ## Project Context
+      {{project_description}}
+
+      ## Datasets
+      {% if data_inventory_table %}
+      - **Inventory table**:
+      {{data_inventory_table}}
+      {% endif %}
+
+      ## Parameters
+      - **Determination method**: {{parameter_types}}
+      - **Uncertainty handling**: {{parameter_uncertainty}}
+      {% if calibration_targets %}- **Calibration targets**: {{calibration_targets}}{% endif %}
+
+      ## Model Specification
+      - **Type**: {{model_type}}
+      {% if theoretical_foundation %}- **Theory**: {{theoretical_foundation}}{% endif %}
+      {% if key_equations %}- **Key equations**: {{key_equations}}{% endif %}
+
+      ## Technical Requirements
+      - **Language**: {{programming_language}}
+      {% if python_libraries %}- **Libraries**: {{python_libraries}}{% endif %}
+      - **Reproducibility standard**: {{reproducibility_standard}}
+      - **Sensitivity analysis**: {{sensitivity_type}}
+      - **Uncertainty quantification**: {{uq_approach}}
+
+      ## Publication Target
+      {{target_publication}}
+
+      ---
+
+      # SCIENTIFIC MODELING BEST PRACTICES
+
+      ## Code Quality Principles
+      The code must be:
+      - **Simple and readable**: Prioritize clarity over cleverness. Another researcher should understand the code in one reading.
+      - **Editable**: Easy to modify parameters, equations, and assumptions without deep code changes.
+      - **Self-documenting**: Variable names should match paper notation. Use `price_elasticity` not `pe` or `x1`.
+      - **Modular**: Each function does one thing. Separate data loading, model equations, calibration, simulation, and visualization.
+      - **Reproducible**: Same inputs always produce same outputs. Set random seeds. Log environment info.
+
+      ## Mandatory Requirements
+      1. **No hardcoded values**: ALL parameters must be in config files (YAML/JSON), never in code.
+      2. **Parameter documentation**: Every parameter needs: value, unit, source citation, uncertainty range.
+      3. **Master script**: Single entry point (`run_all.py`) that reproduces all results from raw data to final figures.
+      4. **Relative paths only**: Use `pathlib.Path` with project root. Never absolute paths.
+      5. **Explicit dependencies**: `requirements.txt` with pinned versions (e.g., `pandas==2.0.0`).
+      6. **Git-friendly outputs**: Figures as PDF/PNG, tables as CSV/LaTeX. No binary formats in repo.
+
+      ## Code Structure Standards
+      ```python
+      # Every function must have:
+      def calculate_welfare(consumption: np.ndarray, params: dict) -> float:
+          """
+          Calculate household welfare using CES utility.
+
+          Parameters
+          ----------
+          consumption : np.ndarray
+              Consumption vector by good category
+          params : dict
+              Model parameters including elasticity of substitution
+
+          Returns
+          -------
+          float
+              Welfare measure (utils)
+
+          Notes
+          -----
+          Implements equation (3) from the paper:
+          U = (sum_i c_i^rho)^(1/rho)
+          """
+          # Implementation here
+      ```
+
+      ## Sensitivity Analysis Requirements
+      - Use SALib for global sensitivity analysis
+      - Minimum: Sobol indices for all uncertain parameters
+      - Report first-order (S1) and total-order (ST) indices
+      - Include convergence diagnostics
+      - Visualize parameter importance ranking
+
+      ## Uncertainty Quantification Standards
+      - Define probability distributions for all uncertain parameters
+      - Propagate uncertainty through Monte Carlo (minimum 1000 runs)
+      - Report 90% confidence intervals on all key results
+      - Decompose uncertainty by source when possible
+
+      ## Validation Checklist
+      - [ ] Unit tests for all core functions
+      - [ ] Analytical test cases (known solutions)
+      - [ ] Conservation/balance checks (energy, mass, budget)
+      - [ ] Limiting cases (parameters → 0 or ∞)
+      - [ ] Comparison with published results or other models
+
+      ---
+
+      # DEFAULT SCIENTIFIC MODEL TEMPLATE (PRE-FILLED)
+
+      Use this as the starting point, and update as new information arrives.
+
+      ## Minimal Model Spec
+      - **Objective**: Quantify a clear outcome linked to the research question.
+      - **Structure**: Keep equations and assumptions explicit and editable.
+      - **Scope**: Focus on the smallest model that answers the question.
+
+      ## Default Data Assumptions
+      - Public or shareable data where possible; document any restrictions.
+      - Prefer tabular sources with clear variable definitions.
+      - Keep preprocessing steps small, deterministic, and documented.
+
+      ## Default Parameter Template
+      - Each parameter has: name, symbol, value, unit, min, max, source, notes.
+      - Distinguish estimated vs calibrated vs assumed.
+      - If unknown, mark as TBD and add a placeholder source.
+
+      ## Default Output Template
+      - Primary outcome table
+      - One core figure (publication-ready)
+      - One sensitivity plot for key parameters
+
+      ---
+
+      ## Instructions
+
+      Please help me build this model following the requirements above:
+
+      1. **Project Structure**: Create the replication package folder structure following {{reproducibility_standard}} standards
+
+      2. **Configuration Files**: Generate config.yaml and parameters.yaml with:
+         - All model parameters documented with sources
+         - Uncertainty ranges for each parameter
+         - Clear separation of calibrated vs. assumed parameters
+
+      3. **Core Model Code**: Implement the model in Python with:
+         - Clear docstrings following numpy style
+         - Type hints for all functions
+         - Separation of equations, calibration, and simulation
+         - All parameters loaded from config (no hardcoding)
+
+      4. **Sensitivity Analysis**: Set up SALib for {{sensitivity_type}} analysis with:
+         - Problem definition matching parameters.yaml
+         - Analysis functions for key outputs
+         - Visualization of Sobol indices
+
+      5. **Uncertainty Quantification**: Implement {{uq_approach}} using appropriate libraries
+
+      6. **Validation Tests**: Create test cases including:
+         - Unit tests for key functions
+         - Analytical test cases where possible
+         - Conservation/balance checks
+
+      7. **Master Script**: Create run_all.py that:
+         - Sets random seed for reproducibility
+         - Runs entire pipeline from data to figures
+         - Logs execution time and environment info
+
+      8. **Documentation**: Generate:
+         - README.md with complete setup instructions
+         - Data dictionary for all variables
+         - Parameters table with sources and uncertainty
+
+      {% if additional_notes %}
+      ## Additional Constraints
+      {{additional_notes}}
+      {% endif %}
+
+      Please start by creating the project structure and configuration files, then proceed step by step through each component.
+
+  # Sensitivity Analysis Setup Prompt
+  - type: prompt
+    name: "Sensitivity Analysis Setup"
+    template: |
+      Set up global sensitivity analysis for "{{project_name}}" using SALib.
+
+      ## Parameters to Analyze
+      {{sensitivity_parameters}}
+
+      ## Methods Required
+      {{sensitivity_type}}
+
+      ## Outputs to Analyze
+      {{sensitivity_outputs}}
+
+      Please provide:
+
+      1. **SALib Problem Definition**: Create the problem dictionary with:
+         - All parameter names
+         - Bounds (min, max) from parameters.yaml
+         - Appropriate distributions
+
+      2. **Sampling Code**: Generate samples for:
+         {% if sensitivity_type contains 'morris' %}- Morris method (with optimal trajectories){% endif %}
+         {% if sensitivity_type contains 'sobol' %}- Sobol method (with second-order indices){% endif %}
+
+      3. **Analysis Wrapper**: Function that:
+         - Runs the model for each sample
+         - Handles parallelization if needed
+         - Saves intermediate results
+
+      4. **Visualization**: Create publication-ready plots for:
+         - First-order and total-order Sobol indices
+         - Morris μ* vs σ plot
+         - Convergence diagnostics
+
+      5. **Interpretation Guide**: Add comments explaining:
+         - How to interpret each index
+         - Threshold for "important" parameters
+         - Limitations of the analysis
+
+  # Uncertainty Quantification Prompt
+  - type: prompt
+    name: "Uncertainty Quantification Setup"
+    template: |
+      Set up uncertainty quantification for "{{project_name}}".
+
+      ## UQ Approach
+      {{uq_approach}}
+
+      ## Uncertainty Sources
+      {{uncertainty_sources}}
+
+      ## Reporting Format
+      {{confidence_reporting}}
+
+      Please provide:
+
+      1. **Parameter Distributions**: Define probability distributions for uncertain parameters based on:
+         - Confidence intervals from estimation
+         - Ranges from literature
+         - Expert judgment
+
+      2. **Propagation Method**: Implement {{uq_approach}} to propagate uncertainty through the model
+
+      3. **Output Statistics**: Calculate and store:
+         - Mean and standard deviation
+         - Confidence intervals (90%, 95%)
+         - Full distribution if needed
+
+      4. **Visualization**: Create plots showing:
+         - Uncertainty bands on main results
+         - Distribution of key outputs
+         - Sources of uncertainty decomposition
+
+      5. **Integration with Sensitivity Analysis**: Link UQ results to importance of each parameter
+
+  # README Template Prompt
+  - type: prompt
+    name: "README Generator"
+    template: |
+      Generate a README.md file for "{{project_name}}" following the {{readme_template}} format.
+
+      ## Project Information
+      - **Name**: {{project_name}}
+      - **Description**: {{project_description}}
+      - **Authors**: [To be filled]
+      - **Publication**: {{target_publication}}
+
+      ## Technical Details
+      - **Language**: {{programming_language}}
+      - **Computational requirements**: {{computational_requirements}}
+
+      The README must include:
+
+      1. **Overview**: One paragraph describing the model and research question
+
+      2. **Data Availability Statement**: Clear statement about:
+         - Which data can be shared
+         - How to access restricted data
+         - Contact for data requests
+
+      3. **Computational Requirements**:
+         - Software dependencies (with versions)
+         - Hardware requirements
+         - Expected runtime
+
+      4. **Instructions**:
+         - Step 1: Clone repository
+         - Step 2: Set up environment
+         - Step 3: Download/place data
+         - Step 4: Run `python run_all.py`
+         - Step 5: Check outputs
+
+      5. **Directory Structure**: Explain each folder
+
+      6. **Output Description**: What files are produced
+
+      7. **License**: {{version_control}} compatible license
+
+      8. **Citation**: How to cite this work
+
+      9. **Contact**: For questions about the code
+
+  # Parameters Table Prompt
+  - type: prompt
+    name: "Parameters Documentation"
+    template: |
+      Create a comprehensive parameters table for "{{project_name}}".
+
+      ## Parameter Types
+      {{parameter_types}}
+
+      ## Calibration Information
+      {% if calibration_targets %}{{calibration_targets}}{% endif %}
+
+      ## Uncertainty Handling
+      {{parameter_uncertainty}}
+
+      Generate a parameters.yaml file and accompanying documentation table with:
+
+      For EACH parameter:
+      | Parameter | Symbol | Value | Unit | Source | Uncertainty | Notes |
+      |-----------|--------|-------|------|--------|-------------|-------|
+
+      Include:
+      1. **Structural parameters**: From theoretical model
+      2. **Calibrated parameters**: Matched to data moments
+      3. **Estimated parameters**: From econometric analysis
+      4. **External parameters**: From literature or databases
+
+      For each parameter specify:
+      - Point estimate or baseline value
+      - Uncertainty range (min, max) or distribution
+      - Source citation (author, year, table/page)
+      - Any transformations applied
+      - Sensitivity ranking (from GSA if available)
+
+      Also generate parameters.yaml in the format:
+      ```yaml
+      parameters:
+        category_name:
+          param_name:
+            value: X.XX
+            unit: "unit"
+            min: X.XX
+            max: X.XX
+            distribution: "uniform|normal|lognormal"
+            source: "Citation"
+            notes: "Any relevant notes"
+      ```

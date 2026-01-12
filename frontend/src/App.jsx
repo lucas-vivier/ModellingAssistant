@@ -4,18 +4,21 @@ import Questionnaire from './components/Questionnaire'
 import OutputViewer from './components/OutputViewer'
 import TwoPanelLayout from './components/TwoPanelLayout'
 import VisualizationPanel from './components/VisualizationPanel'
+import InteractiveTutorial from './components/InteractiveTutorial'
 
 const API_BASE = import.meta.env.VITE_API_BASE || ''
 
 function App() {
-  const [view, setView] = useState('select') // 'select' | 'questionnaire' | 'results'
+  const [view, setView] = useState('select') // 'select' | 'tutorial' | 'questionnaire' | 'results'
   const [session, setSession] = useState(null)
   const [outputs, setOutputs] = useState(null)
+  const [progress, setProgress] = useState(null)
 
   // State for visualization panel
   const [answers, setAnswers] = useState({})
   const [questions, setQuestions] = useState([])
   const [currentQuestionId, setCurrentQuestionId] = useState(null)
+  const [manualQuestionId, setManualQuestionId] = useState(null)
 
   const startQuestionnaire = async (templateId) => {
     try {
@@ -26,11 +29,14 @@ function App() {
       })
       const data = await response.json()
       setSession(data)
-      setView('questionnaire')
+      const nextView = templateId === 'scientific_model_project' ? 'tutorial' : 'questionnaire'
+      setView(nextView)
       // Reset visualization state
       setAnswers({})
       setQuestions([])
       setCurrentQuestionId(null)
+      setManualQuestionId(null)
+      setProgress(null)
     } catch (error) {
       console.error('Error starting session:', error)
     }
@@ -53,6 +59,8 @@ function App() {
     setAnswers({})
     setQuestions([])
     setCurrentQuestionId(null)
+    setManualQuestionId(null)
+    setProgress(null)
     setView('select')
   }
 
@@ -67,8 +75,20 @@ function App() {
       setAnswers(status.answers || {})
       setQuestions(status.questions || [])
       setCurrentQuestionId(status.next_question?.id || null)
+      setProgress(status.progress || null)
+      setManualQuestionId(prev => {
+        if (!prev) return prev
+        const stillVisible = status.questions?.some(q => q.id === prev)
+        return stillVisible ? prev : null
+      })
     }
   }
+
+  const handleQuestionActivate = (questionId) => {
+    setManualQuestionId(questionId)
+  }
+
+  const effectiveQuestionId = manualQuestionId || currentQuestionId
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -79,7 +99,7 @@ function App() {
             className="font-display text-xl font-semibold text-white cursor-pointer hover:text-accent transition-colors"
             onClick={handleRestart}
           >
-            Questionnaire<span className="text-accent">.</span>
+            ComPath<span className="text-accent">.</span>
           </h1>
           {session && view !== 'select' && (
             <button
@@ -93,7 +113,7 @@ function App() {
       </header>
 
       {/* Main content */}
-      <main className="flex-1 flex items-start justify-center p-6">
+      <main className="flex-1 flex items-start justify-center p-5">
         {view === 'select' && (
           <div className="w-full max-w-2xl">
             <TemplateSelector onSelect={startQuestionnaire} />
@@ -101,25 +121,55 @@ function App() {
         )}
 
         {view === 'questionnaire' && session && (
-          <TwoPanelLayout
-            leftPanel={
-              <Questionnaire
-                sessionId={session.session_id}
-                templateName={session.template_name}
-                onComplete={handleComplete}
-                onAnswerUpdate={handleAnswerUpdate}
-                onStatusUpdate={handleStatusUpdate}
-              />
-            }
-            rightPanel={
-              <VisualizationPanel
-                answers={answers}
-                questions={questions}
-                template={session.template}
-                currentQuestionId={currentQuestionId}
-              />
-            }
-          />
+          <div className="w-full max-w-7xl mx-auto">
+            {progress && (
+              <div className="mb-4 bg-ink-900/60 border border-ink-800 rounded-2xl px-5 py-3">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="text-xs uppercase tracking-[0.2em] text-ink-500">
+                    {session.template_name}
+                  </div>
+                  <span className="text-sm text-ink-200">
+                    {progress.percentage}%
+                  </span>
+                </div>
+                <div className="progress-bar">
+                  <div
+                    className="progress-fill"
+                    style={{ width: `${progress.percentage}%` }}
+                  />
+                </div>
+              </div>
+            )}
+            <TwoPanelLayout
+              leftPanel={
+                <Questionnaire
+                  sessionId={session.session_id}
+                  onComplete={handleComplete}
+                  onAnswerUpdate={handleAnswerUpdate}
+                  onStatusUpdate={handleStatusUpdate}
+                  currentQuestionId={effectiveQuestionId}
+                  onQuestionActivate={handleQuestionActivate}
+                />
+              }
+              rightPanel={
+                <VisualizationPanel
+                  answers={answers}
+                  questions={questions}
+                  template={session.template}
+                  currentQuestionId={effectiveQuestionId}
+                />
+              }
+            />
+          </div>
+        )}
+
+        {view === 'tutorial' && session && (
+          <div className="w-full max-w-5xl mx-auto">
+            <InteractiveTutorial
+              onFinish={() => setView('questionnaire')}
+              onSkip={() => setView('questionnaire')}
+            />
+          </div>
         )}
 
         {view === 'results' && outputs && (
@@ -135,7 +185,7 @@ function App() {
       {/* Footer */}
       <footer className="border-t border-ink-800/50 py-4">
         <div className="max-w-7xl mx-auto px-6 text-center text-ink-500 text-sm">
-          Dynamic Questionnaire
+          ComPath
         </div>
       </footer>
     </div>

@@ -102,6 +102,114 @@ function QuestionCard({ question, value, onChange, status = 'current', disabled 
           </div>
         )
 
+      case 'repeatable': {
+        const entries = Array.isArray(value) ? value : []
+        const fields = question.fields || []
+
+        const updateEntry = (index, fieldId, fieldValue) => {
+          const next = entries.map((entry, idx) => {
+            if (idx !== index) return entry
+            return { ...(entry || {}), [fieldId]: fieldValue }
+          })
+          onChange(next)
+        }
+
+        const addEntry = () => {
+          const empty = fields.reduce((acc, field) => {
+            acc[field.id] = ''
+            return acc
+          }, {})
+          onChange([...entries, empty])
+        }
+
+        const removeEntry = (index) => {
+          onChange(entries.filter((_, idx) => idx !== index))
+        }
+
+        const renderFieldInput = (entry, field, index) => {
+          const fieldValue = entry?.[field.id] ?? ''
+          if (field.type === 'single_choice') {
+            return (
+              <select
+                className="input-field"
+                value={fieldValue}
+                onChange={(e) => updateEntry(index, field.id, e.target.value)}
+                disabled={disabled}
+              >
+                <option value="">Select...</option>
+                {(field.options || []).map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            )
+          }
+
+          if (field.type === 'textarea') {
+            return (
+              <textarea
+                className="input-field min-h-[90px] resize-y"
+                placeholder={field.placeholder || ''}
+                value={fieldValue}
+                onChange={(e) => updateEntry(index, field.id, e.target.value)}
+                disabled={disabled}
+              />
+            )
+          }
+
+          return (
+            <input
+              type="text"
+              className="input-field"
+              placeholder={field.placeholder || ''}
+              value={fieldValue}
+              onChange={(e) => updateEntry(index, field.id, e.target.value)}
+              disabled={disabled}
+            />
+          )
+        }
+
+        return (
+          <div className="space-y-4">
+            {entries.length === 0 && (
+              <p className="text-sm text-ink-500">No datasets yet. Add one to start.</p>
+            )}
+            {entries.map((entry, index) => (
+              <div key={index} className="rounded-xl border border-ink-800/60 bg-ink-900/40 p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm font-medium text-ink-200">Dataset {index + 1}</span>
+                  <button
+                    type="button"
+                    onClick={() => removeEntry(index)}
+                    className="text-xs text-ink-500 hover:text-ink-200"
+                    disabled={disabled}
+                  >
+                    Remove
+                  </button>
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                  {fields.map((field) => (
+                    <label key={field.id} className="flex flex-col gap-2 text-xs text-ink-400">
+                      <span>{field.label}</span>
+                      {renderFieldInput(entry, field, index)}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            ))}
+            <button
+              type="button"
+              className="btn-secondary text-sm"
+              onClick={addEntry}
+              disabled={disabled}
+            >
+              Add dataset
+            </button>
+          </div>
+        )
+      }
+
       default:
         return (
           <input

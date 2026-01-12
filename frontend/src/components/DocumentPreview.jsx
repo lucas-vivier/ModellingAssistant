@@ -1,23 +1,6 @@
 import { useMemo } from 'react'
 
-function DocumentPreview({ answers, questions, template, currentQuestionId }) {
-  // Build a map of question IDs to their status
-  const questionStatus = useMemo(() => {
-    const statusMap = {}
-    if (!questions) return statusMap
-
-    questions.forEach(q => {
-      if (q.answered) {
-        statusMap[q.id] = 'answered'
-      } else if (q.id === currentQuestionId) {
-        statusMap[q.id] = 'current'
-      } else {
-        statusMap[q.id] = 'pending'
-      }
-    })
-    return statusMap
-  }, [questions, currentQuestionId])
-
+function DocumentPreview({ answers, questions }) {
   // Build a map of question IDs to their labels (for options)
   const optionLabels = useMemo(() => {
     const labels = {}
@@ -34,7 +17,6 @@ function DocumentPreview({ answers, questions, template, currentQuestionId }) {
     return labels
   }, [questions])
 
-  // Format answer value for display
   const formatAnswer = (questionId, value) => {
     if (value === null || value === undefined || value === '') {
       return null
@@ -58,61 +40,6 @@ function DocumentPreview({ answers, questions, template, currentQuestionId }) {
     return value
   }
 
-  // Get status class for a question
-  const getStatusClass = (questionId) => {
-    const status = questionStatus[questionId]
-    return `status-section status-${status || 'pending'}`
-  }
-
-  // Group questions into sections for the document view
-  const sections = useMemo(() => {
-    if (!questions) return []
-
-    return [
-      {
-        title: 'Project Identity',
-        questions: ['project_name', 'project_description', 'project_type']
-      },
-      {
-        title: 'Technology Stack',
-        questions: ['languages', 'python_framework', 'js_framework']
-      },
-      {
-        title: 'Data Architecture',
-        questions: ['data_input', 'database_type']
-      },
-      {
-        title: 'Organization',
-        questions: ['team_size', 'timeline']
-      },
-      {
-        title: 'Quality & Documentation',
-        questions: ['testing_strategy', 'documentation', 'ci_cd']
-      },
-      {
-        title: 'Deployment',
-        questions: ['deployment']
-      },
-      {
-        title: 'Additional Notes',
-        questions: ['additional_notes']
-      }
-    ]
-  }, [questions])
-
-  // Get question label by ID
-  const getQuestionLabel = (questionId) => {
-    const q = questions?.find(q => q.id === questionId)
-    if (!q) return questionId
-    // Simplify question text for display
-    return q.question.replace(/\?$/, '').replace(/^What is (your )?/i, '').replace(/^Which /i, '')
-  }
-
-  // Check if a question is visible
-  const isQuestionVisible = (questionId) => {
-    return questions?.some(q => q.id === questionId)
-  }
-
   if (!questions || questions.length === 0) {
     return (
       <div className="text-center py-12 text-ink-500">
@@ -121,91 +48,227 @@ function DocumentPreview({ answers, questions, template, currentQuestionId }) {
     )
   }
 
+  const dataInventory = Array.isArray(answers?.data_inventory) ? answers.data_inventory : []
+  const sourceTypeLabels = {
+    survey_micro: 'Household/firm survey data',
+    admin_data: 'Administrative data',
+    satellite: 'Satellite / Remote sensing data',
+    time_series: 'Time series (macro indicators)',
+    cross_section: 'Cross-sectional data',
+    panel: 'Panel data',
+    experimental: 'Experimental / RCT data',
+    synthetic: 'Synthetic / Simulated data',
+    literature: 'Parameters from literature',
+    api: 'External API (World Bank, IEA, etc.)'
+  }
+  const privacyLabels = {
+    public: 'Public',
+    restricted_shareable: 'Restricted (shareable with agreement)',
+    confidential: 'Confidential'
+  }
+
   return (
     <div className="animate-fade-in">
-      {/* Document Title */}
-      <div className={getStatusClass('project_name')}>
-        <h1 className="text-2xl font-display font-bold text-white mb-1">
-          {answers?.project_name ? (
-            <>Project: {answers.project_name}</>
-          ) : (
-            <span className="text-ink-500 italic">Project Name</span>
-          )}
+      <div className="question-card">
+        <h1 className="text-2xl font-display font-bold text-white mb-2">
+          Technical Specification
         </h1>
-        {answers?.project_description ? (
-          <p className="text-ink-300 text-sm">{answers.project_description}</p>
-        ) : questionStatus['project_description'] !== 'answered' && (
-          <p className="text-ink-500 text-sm italic">Description pending...</p>
-        )}
-      </div>
+        <p className="text-ink-400 text-sm mb-6">
+          {answers?.project_name || 'Project name pending'}
+        </p>
 
-      {/* Sections */}
-      {sections.map(section => {
-        // Only show section if at least one question is visible
-        const visibleQuestions = section.questions.filter(qId => isQuestionVisible(qId))
-        if (visibleQuestions.length === 0) return null
+        <section className="space-y-3">
+          <h2 className="text-lg font-display font-semibold text-ink-200">Project Overview</h2>
+          <p className="text-ink-200">
+            {answers?.project_description || 'Project description to be defined.'}
+          </p>
+          <p className="text-ink-400 text-sm">
+            Target publication: {formatAnswer('target_publication', answers?.target_publication) || 'TBD'} ·
+            Institution: {formatAnswer('institution_type', answers?.institution_type) || 'TBD'} ·
+            Primary domain: {formatAnswer('model_domain', answers?.model_domain) || 'TBD'}
+          </p>
+        </section>
 
-        // Skip if section is just project name/description (already shown above)
-        if (section.title === 'Project Identity') {
-          const otherQuestions = visibleQuestions.filter(qId => qId !== 'project_name' && qId !== 'project_description')
-          if (otherQuestions.length === 0) return null
-
-          return (
-            <div key={section.title} className="mt-6">
-              <h2 className="text-lg font-display font-semibold text-ink-200 mb-3">{section.title}</h2>
-              {otherQuestions.map(questionId => {
-                const value = formatAnswer(questionId, answers?.[questionId])
-                return (
-                  <div key={questionId} className={getStatusClass(questionId)}>
-                    <span className="text-ink-400 text-sm">{getQuestionLabel(questionId)}</span>
-                    {value ? (
-                      <p className="text-white font-medium">{value}</p>
-                    ) : (
-                      <p className="text-ink-500 italic">Awaiting answer...</p>
-                    )}
-                  </div>
-                )
-              })}
+        <section className="mt-6 space-y-3">
+          <h2 className="text-lg font-display font-semibold text-ink-200">Datasets</h2>
+          {dataInventory.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="doc-table">
+                <thead>
+                  <tr>
+                    <th>Dataset</th>
+                    <th>Source type</th>
+                    <th>Source link</th>
+                    <th>Resolution</th>
+                    <th>Format</th>
+                    <th>Privacy</th>
+                    <th>Size</th>
+                    <th>Test extract</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {dataInventory.map((entry, index) => (
+                    <tr key={`${entry.dataset_name || 'dataset'}-${index}`}>
+                      <td>{entry.dataset_name || '-'}</td>
+                      <td>{sourceTypeLabels[entry.source_type] || entry.source_type || '-'}</td>
+                      <td>{entry.source_link || '-'}</td>
+                      <td>{entry.resolution || '-'}</td>
+                      <td>{entry.data_format || '-'}</td>
+                      <td>{privacyLabels[entry.privacy] || entry.privacy || '-'}</td>
+                      <td>{entry.size || '-'}</td>
+                      <td>{entry.extract_plan || '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          )
-        }
+          ) : (
+            <p className="text-ink-500">Dataset details will be added when available.</p>
+          )}
+        </section>
 
-        return (
-          <div key={section.title} className="mt-6">
-            <h2 className="text-lg font-display font-semibold text-ink-200 mb-3">{section.title}</h2>
-            {visibleQuestions.map(questionId => {
-              const value = formatAnswer(questionId, answers?.[questionId])
-              return (
-                <div key={questionId} className={getStatusClass(questionId)}>
-                  <span className="text-ink-400 text-sm">{getQuestionLabel(questionId)}</span>
-                  {value ? (
-                    <p className="text-white font-medium">{value}</p>
-                  ) : (
-                    <p className="text-ink-500 italic">Awaiting answer...</p>
-                  )}
-                </div>
-              )
-            })}
-          </div>
-        )
-      })}
+        <section className="mt-6 space-y-2">
+          <h2 className="text-lg font-display font-semibold text-ink-200">Parameters & Calibration</h2>
+          <p className="text-ink-200">
+            Parameters will be determined via {formatAnswer('parameter_types', answers?.parameter_types) || 'TBD'}.
+          </p>
+          {answers?.calibration_targets && (
+            <p className="text-ink-200">Calibration targets: {answers.calibration_targets}</p>
+          )}
+          <p className="text-ink-200">
+            Uncertainty handling: {formatAnswer('parameter_uncertainty', answers?.parameter_uncertainty) || 'TBD'}.
+          </p>
+          <p className="text-ink-200">
+            Parameter documentation: {formatAnswer('param_documentation', answers?.param_documentation) || 'TBD'}.
+          </p>
+        </section>
 
-      {/* Legend */}
-      <div className="mt-8 pt-6 border-t border-ink-800">
-        <div className="flex items-center gap-6 text-xs text-ink-500">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded border-l-2 border-green-500/60 bg-green-500/10"></div>
-            <span>Completed</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded border-l-2 border-amber-500/60 bg-amber-500/10"></div>
-            <span>Current</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded border-l-2 border-ink-700 bg-ink-900/30 opacity-50"></div>
-            <span>Pending</span>
-          </div>
-        </div>
+        <section className="mt-6 space-y-2">
+          <h2 className="text-lg font-display font-semibold text-ink-200">Model Specification</h2>
+          <p className="text-ink-200">
+            Model type: {formatAnswer('model_type', answers?.model_type) || 'TBD'}.
+          </p>
+          {answers?.theoretical_foundation && (
+            <p className="text-ink-200">{answers.theoretical_foundation}</p>
+          )}
+          {answers?.key_equations && (
+            <pre className="text-ink-200 bg-ink-900/40 border border-ink-800/60 rounded-xl p-4 whitespace-pre-wrap">
+              {answers.key_equations}
+            </pre>
+          )}
+        </section>
+
+        <section className="mt-6 space-y-2">
+          <h2 className="text-lg font-display font-semibold text-ink-200">Outputs</h2>
+          <p className="text-ink-200">
+            Output types: {formatAnswer('output_types', answers?.output_types) || 'TBD'}.
+          </p>
+          <p className="text-ink-200">
+            Figure formats: {formatAnswer('figure_formats', answers?.figure_formats) || 'TBD'}.
+          </p>
+          <p className="text-ink-200">
+            Table formats: {formatAnswer('table_format', answers?.table_format) || 'TBD'}.
+          </p>
+        </section>
+
+        <section className="mt-6 space-y-2">
+          <h2 className="text-lg font-display font-semibold text-ink-200">Validation & Verification</h2>
+          <p className="text-ink-200">
+            Validation approach: {formatAnswer('validation_approach', answers?.validation_approach) || 'TBD'}.
+          </p>
+          <p className="text-ink-200">
+            Verification tests: {formatAnswer('verification_tests', answers?.verification_tests) || 'TBD'}.
+          </p>
+        </section>
+
+        <section className="mt-6 space-y-2">
+          <h2 className="text-lg font-display font-semibold text-ink-200">Sensitivity Analysis</h2>
+          <p className="text-ink-200">
+            Methods: {formatAnswer('sensitivity_type', answers?.sensitivity_type) || 'TBD'}.
+          </p>
+          {answers?.sensitivity_parameters && (
+            <p className="text-ink-200">Parameters analyzed: {answers.sensitivity_parameters}</p>
+          )}
+          {answers?.sensitivity_outputs && (
+            <p className="text-ink-200">
+              Outputs analyzed: {formatAnswer('sensitivity_outputs', answers?.sensitivity_outputs)}
+            </p>
+          )}
+        </section>
+
+        <section className="mt-6 space-y-2">
+          <h2 className="text-lg font-display font-semibold text-ink-200">Uncertainty Quantification</h2>
+          <p className="text-ink-200">
+            Approach: {formatAnswer('uq_approach', answers?.uq_approach) || 'TBD'}.
+          </p>
+          {answers?.uncertainty_sources && (
+            <p className="text-ink-200">
+              Sources considered: {formatAnswer('uncertainty_sources', answers?.uncertainty_sources)}
+            </p>
+          )}
+          {answers?.confidence_reporting && (
+            <p className="text-ink-200">
+              Reporting format: {formatAnswer('confidence_reporting', answers?.confidence_reporting)}
+            </p>
+          )}
+        </section>
+
+        <section className="mt-6 space-y-2">
+          <h2 className="text-lg font-display font-semibold text-ink-200">Reproducibility</h2>
+          <p className="text-ink-200">
+            Standard: {formatAnswer('reproducibility_standard', answers?.reproducibility_standard) || 'TBD'}.
+          </p>
+          <p className="text-ink-200">
+            Master script: {formatAnswer('code_structure', answers?.code_structure) || 'TBD'}.
+          </p>
+          <p className="text-ink-200">
+            Random seeds: {formatAnswer('random_seed', answers?.random_seed) || 'TBD'}.
+          </p>
+          <p className="text-ink-200">
+            Environment: {formatAnswer('environment_management', answers?.environment_management) || 'TBD'}.
+          </p>
+          <p className="text-ink-200">
+            Version control: {formatAnswer('version_control', answers?.version_control) || 'TBD'}.
+          </p>
+        </section>
+
+        <section className="mt-6 space-y-2">
+          <h2 className="text-lg font-display font-semibold text-ink-200">Documentation</h2>
+          <p className="text-ink-200">
+            Documentation types: {formatAnswer('documentation_types', answers?.documentation_types) || 'TBD'}.
+          </p>
+          <p className="text-ink-200">
+            README template: {formatAnswer('readme_template', answers?.readme_template) || 'TBD'}.
+          </p>
+        </section>
+
+        <section className="mt-6 space-y-2">
+          <h2 className="text-lg font-display font-semibold text-ink-200">Technical Stack</h2>
+          <p className="text-ink-200">
+            Language: {formatAnswer('programming_language', answers?.programming_language) || 'TBD'}.
+          </p>
+          {answers?.python_libraries && (
+            <p className="text-ink-200">
+              Libraries: {formatAnswer('python_libraries', answers?.python_libraries)}
+            </p>
+          )}
+          <p className="text-ink-200">
+            Computational requirements: {formatAnswer('computational_requirements', answers?.computational_requirements) || 'TBD'}.
+          </p>
+          <p className="text-ink-200">
+            Parallelization: {formatAnswer('parallelization', answers?.parallelization) || 'TBD'}.
+          </p>
+        </section>
+
+        <section className="mt-6 space-y-2">
+          <h2 className="text-lg font-display font-semibold text-ink-200">Project Management</h2>
+          <p className="text-ink-200">
+            Team size: {formatAnswer('team_size', answers?.team_size) || 'TBD'}.
+          </p>
+          <p className="text-ink-200">
+            Timeline: {answers?.timeline || 'TBD'}.
+          </p>
+        </section>
       </div>
     </div>
   )
